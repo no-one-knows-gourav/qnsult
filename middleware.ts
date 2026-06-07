@@ -2,6 +2,11 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // Bypass middleware redirect and Supabase check in development or demo modes
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('your-project-ref') || process.env.NODE_ENV === 'development') {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
