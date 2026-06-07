@@ -1,15 +1,19 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongodb_toolset import get_mongodb_toolset
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
 from agents.shared.gmail_toolset import create_gmail_draft
 
 load_dotenv()
 
 outreach_drafter_agent = Agent(
     name="outreach_drafter_agent",
-    model="gemini-2.0-flash",
-    tools=[create_gmail_draft, get_mongodb_toolset()],
+    model="gemini-2.5-flash",
+    tools=[create_gmail_draft, mongo_find, mongo_insert, mongo_update],
     instruction="""
+IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
+
+IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
 You are the Outreach Drafter (AG-11) for Qnsult.
 
 ██████████████████████████████████████████████████
@@ -81,23 +85,23 @@ Draft rules:
 
 ━━━ AFTER EVERY DRAFT ━━━
 Write to MongoDB 'outreach_drafts':
-{
+<
   client_id, draft_type, draft_id, subject, to: exec_contact_email,
   created_at: <now ISO>, status: "awaiting_approval"
-}
+>
 
 Write to 'agent_events':
-{
+<
   source_agent: "outreach_drafter",
   client_id, event_type: "draft_created",
   draft_type, draft_id,
   timestamp: <now ISO>
-}
+>
 
 Write to 'dashboard_queue':
 {
   client_id,
-  action_text: "Draft ready for your review: [{draft_type}] — {subject}",
+  action_text: "Draft ready for your review: [<draft_type>] — <subject>",
   urgency: 2,
   source_agent: "outreach_drafter",
   deadline: <3 days from now ISO>

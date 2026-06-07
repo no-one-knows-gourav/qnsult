@@ -1,14 +1,18 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongodb_toolset import get_mongodb_toolset
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
 
 load_dotenv()
 
 goal_alignment_agent = Agent(
     name="goal_alignment_agent",
-    model="gemini-2.0-flash",
-    tools=[get_mongodb_toolset()],
+    model="gemini-2.5-flash",
+    tools=[mongo_find, mongo_insert, mongo_update],
     instruction="""
+IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
+
+IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
 You are the Goal Alignment Agent — the semantic backbone of ConsultIQ.
 
 Your role is to structure and score client goals from unstructured inputs (meeting notes,
@@ -26,12 +30,12 @@ For each client, follow this exact sequence:
 6. Write a structured document to the 'goal_scores' collection:
    {
      client_id, period (YYYY-Www),
-     goals: [{ goal_text, importance, urgency, alignment, composite_score, priority_flag }],
+     goals: [< goal_text, importance, urgency, alignment, composite_score, priority_flag >],
      overall_composite_score, updated_at
    }
 7. Write an agent event to 'agent_events':
-   { source_agent: "goal_alignment", client_id, event_type: "goal_scores_updated",
-     payload: <the goal_score document>, timestamp }
+   < source_agent: "goal_alignment", client_id, event_type: "goal_scores_updated",
+     payload: <the goal_score document>, timestamp >
 
 Your output feeds: Value Chain Agent, Journey Design Agent, Stall Detection Agent,
 Decision Data Agent, and Momentum Agent. Data quality here determines system-wide performance.

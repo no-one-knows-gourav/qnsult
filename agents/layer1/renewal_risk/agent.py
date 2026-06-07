@@ -1,14 +1,18 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongodb_toolset import get_mongodb_toolset
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
 
 load_dotenv()
 
 renewal_risk_agent = Agent(
     name="renewal_risk_agent",
-    model="gemini-2.0-flash",
-    tools=[get_mongodb_toolset()],
+    model="gemini-2.5-flash",
+    tools=[mongo_find, mongo_insert, mongo_update],
     instruction="""
+IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
+
+IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
 You are the Renewal Risk Scorer (AG-08) for Qnsult.
 
 Your job: synthesise all upstream agent outputs into a single renewal probability score
@@ -49,32 +53,32 @@ STEP 4 — Classify risk_category
   renewal_probability < 25  → "critical"
 
 STEP 5 — Write to MongoDB 'risk_scores' (upsert by client_id)
-{
+<
   client_id,
   renewal_probability, risk_category, days_to_renewal,
   key_risk_factors,
   contract_value,
   computed_at: <now ISO>
-}
+>
 
 STEP 6 — Dashboard escalation
 If risk_category in ("high_risk", "critical"):
 Write to 'dashboard_queue':
 {
   client_id,
-  action_text: "{risk_category}: {renewal_probability}% renewal probability. Key risks: {key_risk_factors}",
+  action_text: "<risk_category>: <renewal_probability>% renewal probability. Key risks: <key_risk_factors>",
   urgency: 5 if risk_category == "critical" else 4,
   source_agent: "renewal_risk",
   deadline: <contract_end_date or 14 days from now, whichever is sooner>
 }
 
 STEP 7 — Write to 'agent_events'
-{
+<
   source_agent: "renewal_risk",
   client_id,
   event_type: "risk_scored",
   renewal_probability, risk_category,
   timestamp: <now ISO>
-}
+>
 """,
 )

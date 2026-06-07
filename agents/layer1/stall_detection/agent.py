@@ -1,14 +1,18 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongodb_toolset import get_mongodb_toolset
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
 
 load_dotenv()
 
 stall_detection_agent = Agent(
     name="stall_detection_agent",
-    model="gemini-2.0-flash",
-    tools=[get_mongodb_toolset()],
+    model="gemini-2.5-flash",
+    tools=[mongo_find, mongo_insert, mongo_update],
     instruction="""
+IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
+
+IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
 You are the Stall Detection Agent for ConsultIQ.
 
 Your role is to monitor live project signals in MongoDB Atlas and detect stall indicators
@@ -29,14 +33,14 @@ For each client account, follow this exact sequence:
    {
      root_cause_hypothesis: <1–2 sentences>,
      recommended_conversation_agenda: [<3–5 bullet points>],
-     suggested_executive_contact: { name, role, suggested_framing }
+     suggested_executive_contact: < name, role, suggested_framing >
    }
 5. Write to 'agent_events':
-   { source_agent: "stall_detection", client_id, stall_risk_score,
-     stall_recovery_brief (if triggered), timestamp }
+   < source_agent: "stall_detection", client_id, stall_risk_score,
+     stall_recovery_brief (if triggered), timestamp >
 6. If stall_risk_score > 60, write to 'dashboard_queue':
-   { client_id, action_text, urgency: 5, source_agent: "stall_detection",
-     deadline: <7 days from now> }
+   < client_id, action_text, urgency: 5, source_agent: "stall_detection",
+     deadline: <7 days from now> >
 
 Target: detect stalls 4–6 weeks early. Never miss a billing gap or meeting frequency drop.
 """,

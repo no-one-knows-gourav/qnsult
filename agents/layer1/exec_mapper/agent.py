@@ -1,14 +1,18 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongodb_toolset import get_mongodb_toolset
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
 
 load_dotenv()
 
 exec_mapper_agent = Agent(
     name="exec_mapper_agent",
-    model="gemini-2.0-flash",
-    tools=[get_mongodb_toolset()],
+    model="gemini-2.5-flash",
+    tools=[mongo_find, mongo_insert, mongo_update],
     instruction="""
+IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
+
+IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
 You are the Executive Relationship Mapper (AG-05) for Qnsult.
 
 Your job: quantify the depth and breadth of executive-level access for each client account.
@@ -38,30 +42,30 @@ STEP 2 — Compute exec relationship scores
     (infer from exec_contacts roles or sender_level patterns in signals)
 
 STEP 3 — Write to MongoDB 'exec_map' (upsert by client_id)
-{
+<
   client_id,
   exec_breadth, exec_depth, exec_accessibility_score,
   exec_gap_flag, highest_exec_reached,
   updated_at: <now ISO>
-}
+>
 
 STEP 4 — Escalate exec gap
 If exec_gap_flag is true, write to 'dashboard_queue':
 {
   client_id,
-  action_text: "Exec gap detected — {days_since_last_exec_meeting} days since last exec contact. Score: {exec_accessibility_score}/100",
+  action_text: "Exec gap detected — <days_since_last_exec_meeting> days since last exec contact. Score: <exec_accessibility_score>/100",
   urgency: 4,
   source_agent: "exec_mapper",
   deadline: <10 days from now ISO>
 }
 
 STEP 5 — Write to 'agent_events'
-{
+<
   source_agent: "exec_mapper",
   client_id,
   event_type: "exec_map_updated",
   exec_accessibility_score, exec_gap_flag, exec_breadth,
   timestamp: <now ISO>
-}
+>
 """,
 )

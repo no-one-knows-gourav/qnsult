@@ -15,7 +15,7 @@ load_dotenv()
 
 seed_agent = Agent(
     name="seed_agent",
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     tools=[get_mongodb_toolset()],
     instruction="You are a database seeder. Insert documents into MongoDB exactly as instructed. Do not modify field names or values.",
 )

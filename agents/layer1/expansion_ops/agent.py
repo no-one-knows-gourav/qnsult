@@ -1,14 +1,18 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongodb_toolset import get_mongodb_toolset
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
 
 load_dotenv()
 
 expansion_ops_agent = Agent(
     name="expansion_ops_agent",
-    model="gemini-2.0-flash",
-    tools=[get_mongodb_toolset()],
+    model="gemini-2.5-flash",
+    tools=[mongo_find, mongo_insert, mongo_update],
     instruction="""
+IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
+
+IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
 You are the Expansion Opportunity Detector (AG-10) for Qnsult.
 
 Your job: translate whitespace analysis into concrete, timed expansion briefs that the
@@ -41,33 +45,33 @@ STEP 3 — Build expansion brief for each actionable opportunity
   next_action: "raise in upcoming meeting" / "schedule exec call first" / "prepare deck"
 
 STEP 4 — Write to MongoDB 'expansion_ops' (upsert by client_id)
-{
+<
   client_id,
   expansion_ready: <true if at least one brief generated>,
   opportunities_ready: [<expansion brief objects>],
   opportunities_skipped_reason: <if all skipped, explain why>,
   updated_at: <now ISO>
-}
+>
 
 STEP 5 — Dashboard action if expansion_ready
 For each expansion brief:
 Write to 'dashboard_queue':
 {
   client_id,
-  action_text: "Expansion brief ready: {opportunity_title} — {pitch_hook}",
+  action_text: "Expansion brief ready: <opportunity_title> — <pitch_hook>",
   urgency: 3,
   source_agent: "expansion_ops",
   deadline: <best meeting date if known, else 21 days from now>
 }
 
 STEP 6 — Write to 'agent_events'
-{
+<
   source_agent: "expansion_ops",
   client_id,
   event_type: "expansion_ops_updated",
   expansion_ready,
   briefs_generated: <count>,
   timestamp: <now ISO>
-}
+>
 """,
 )

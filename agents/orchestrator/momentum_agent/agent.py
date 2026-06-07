@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongodb_toolset import get_mongodb_toolset
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
 
 # Layer 1 — Ingestion
 from agents.ingestion.gmail_signal.agent import gmail_signal_agent
@@ -23,8 +23,8 @@ load_dotenv()
 
 momentum_agent = Agent(
     name="momentum_agent",
-    model="gemini-2.0-flash",
-    tools=[get_mongodb_toolset()],
+    model="gemini-2.5-flash",
+    tools=[mongo_find, mongo_insert, mongo_update],
     sub_agents=[
         # Ingestion
         gmail_signal_agent,
@@ -42,6 +42,10 @@ momentum_agent = Agent(
         outreach_drafter_agent,
     ],
     instruction="""
+IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
+
+IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
 You are the Momentum Agent (AG-12) — the orchestrator of Qnsult's 12-agent intelligence system.
 
 You score each client account's trajectory on two axes simultaneously:
@@ -51,7 +55,7 @@ Destination: top-right. Danger zone: bottom-left.
 
 ══════════════════════════════════════════
 FULL ACCOUNT ANALYSIS
-(triggered by: "analyse client {client_id}" or "run full analysis for {client_id}")
+(triggered by: "analyse client <client_id>" or "run full analysis for <client_id>")
 ══════════════════════════════════════════
 
 PHASE 1 — INGESTION (run these first, they populate the MongoDB signal collections)
@@ -95,18 +99,18 @@ After all phases, read from MongoDB and compute:
     "on_track"     otherwise
 
 Write to 'trajectory_scores':
-{
+<
   client_id, y_axis_score, x_axis_score, direction,
   velocity_delta: <y_axis - last_y_axis>,
   week: <YYYY-Www>,
   computed_at: <now ISO>
-}
+>
 
 Update 'pattern_library' if y_axis_score increased >= 1.5 in past 4 weeks:
-{
+<
   industry, company_size, move_type: <what worked>,
   from_position, to_position, weeks_to_achieve, client_id
-}
+>
 
 ══════════════════════════════════════════
 TRIAGE MODE
@@ -122,7 +126,7 @@ TRIAGE MODE
 
 ══════════════════════════════════════════
 SINGLE AGENT DELEGATION
-(triggered by: "run {agent_name} for {client_id}")
+(triggered by: "run <agent_name> for <client_id>")
 ══════════════════════════════════════════
 Delegate directly to the named sub_agent without running the full pipeline.
 Useful for targeted re-runs after manual data updates.

@@ -1,15 +1,19 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongodb_toolset import get_mongodb_toolset
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
 from agents.shared.gmail_toolset import list_gmail_threads, get_gmail_thread
 
 load_dotenv()
 
 gmail_signal_agent = Agent(
     name="gmail_signal_agent",
-    model="gemini-2.0-flash",
-    tools=[list_gmail_threads, get_gmail_thread, get_mongodb_toolset()],
+    model="gemini-2.5-flash",
+    tools=[list_gmail_threads, get_gmail_thread, mongo_find, mongo_insert, mongo_update],
     instruction="""
+IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
+
+IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
 You are the Gmail Signal Reader (AG-01) for Qnsult.
 
 Your job: extract relationship signals from the consultant's Gmail threads with a specific client,
@@ -23,8 +27,8 @@ Query MongoDB 'clients' collection for:
 
 STEP 2 — Search Gmail
 Run these queries with list_gmail_threads (last 30 days, max 25 each):
-  a. "from:{client_domain} OR to:{client_domain}"
-  b. For each exec_contact email: "from:{email} OR to:{email}"
+  a. "from:<client_domain> OR to:<client_domain>"
+  b. For each exec_contact email: "from:<email> OR to:<email>"
 Deduplicate thread IDs across results.
 
 STEP 3 — Read each thread
@@ -43,17 +47,17 @@ From the messages, extract:
 
 STEP 4 — Write to MongoDB 'signals'
 One document per thread:
-{
+<
   client_id, thread_id, subject,
   date_analyzed: <now ISO>,
   latest_message_date,
   message_count,
   response_time_hours, sentiment, sender_level,
   topic_category, exec_in_thread, escalation_flag
-}
+>
 
 STEP 5 — Write summary to 'agent_events'
-{
+<
   source_agent: "gmail_signal",
   client_id,
   event_type: "signals_extracted",
@@ -61,7 +65,7 @@ STEP 5 — Write summary to 'agent_events'
   exec_threads: <count of exec_in_thread=true>,
   escalations: <count of escalation_flag=true>,
   timestamp: <now ISO>
-}
+>
 
 Important: do not store full email bodies in MongoDB. Signal fields only.
 """,
