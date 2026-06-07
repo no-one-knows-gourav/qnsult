@@ -100,6 +100,11 @@ export default function LandingPage() {
 
         {/* WALL QUOTE OPENER */}
         <div className="wqb">
+          {/* Chess king — background accent beside quote */}
+          <div className="wqb-chess-wrap">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/landing_page_5.jpg" alt="" className="wqb-chess-img" />
+          </div>
           <div className="wqb-inner">
             <div className="wqb-rule" />
             <div className="wqb-eyebrow">Industry Reality Check</div>
@@ -1205,14 +1210,34 @@ const STYLES = `
   position: relative; z-index: 1;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(180deg, rgba(255,46,191,0.04) 0%, transparent 100%);
+  overflow: hidden;
 }
-.wqb-inner { max-width: 1000px; margin: 0 auto; padding: 56px 40px; }
+.wqb-inner { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; padding: 56px 40px; }
+
+/* Chess king image — background accent beside quote */
+.wqb-chess-wrap {
+  position: absolute; right: -2%; top: 0; bottom: 0; width: 48%;
+  pointer-events: none; z-index: 0;
+  /* Horizontal fade: transparent at left edge → opaque at center → fade right edge */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 14%, black 32%, black 80%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 14%, black 32%, black 80%, transparent 100%);
+}
+.wqb-chess-img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center 18%;
+  /* Shift hue toward the page's pink/violet palette */
+  filter: hue-rotate(40deg) saturate(1.4) brightness(0.62);
+  opacity: 0.42;
+  /* Along the length: king (top) most opaque → chessboard base (bottom) fades to transparent */
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,0.88) 35%, rgba(0,0,0,0.32) 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,0.88) 35%, rgba(0,0,0,0.32) 70%, transparent 100%);
+}
 .wqb-rule { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,46,191,0.35), rgba(155,48,217,0.35), transparent); margin-bottom: 40px; }
 .wqb-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--pink); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 20px; }
 .wqb-quote {
   font-family: 'Cormorant Garant', Georgia, serif; font-weight: 600; font-style: italic;
   font-size: clamp(30px, 4.2vw, 56px); letter-spacing: -0.01em;
-  color: var(--text-1); line-height: 1.22; margin: 0 0 44px; max-width: 800px;
+  color: var(--text-1); line-height: 1.22; margin: 0 0 44px; max-width: 620px;
 }
 .wqb-stats { display: flex; align-items: stretch; gap: 0; }
 .wqb-stat { flex: 1; display: flex; flex-direction: column; gap: 8px; }
@@ -1792,6 +1817,7 @@ const STYLES = `
   .problem-grid, .agent-grid, .t-stage { grid-template-columns: 1fr; }
   .escape-grid { grid-template-columns: 1fr; }
   .esc-divider { display: none; }
+  .wqb-chess-wrap { display: none; }
   .wqb-stats { flex-direction: column; }
   .wqb-vr { display: none; }
   .wqb-stat:not(:first-child) { padding-left: 0; padding-top: 20px; border-top: 1px solid var(--border); }
