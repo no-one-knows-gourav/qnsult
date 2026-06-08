@@ -47,6 +47,18 @@ const CLIENTS_DATA = [
   { name: 'Halcyon Systems', score: '1.65', status: 'Stalling', tag: 'Technology', contact: 'Greg House (CTO)', email: 'g.house@halcyonsystems.com', lastActive: '7 days ago', notes: 'Stall score 9.1. 3 missed milestones. Exec contact quiet for 7 weeks. Flagged email sentence: "push the stakeholder review to next month."' }
 ]
 
+const MOCK_MAILS = [
+  { client: 'Pinnacle Group', sender: 'Sarah Jenkins', subject: 'Re: Phase 3 Kickoff and Resource Allocation', excerpt: 'Re: Phase 3 Kickoff and Resource Allocation' },
+  { client: 'NovaTech Solutions', sender: 'Elena Rostova', subject: 'Tech stack optimization pattern feedback', excerpt: 'Tech stack optimization pattern feedback' },
+  { client: 'Halcyon Systems', sender: 'Greg House', subject: 'Urgent: Project timeline delay update', excerpt: 'Urgent: Project timeline delay update' }
+]
+
+const MOCK_FLOW_ACTIONS = [
+  { agent: 'AG-03 Stall Detection Agent', color: 'var(--pink-hi)', body: 'Analyzing Gmail communications for Halcyon Systems... flagged phrase: "push milestones to next month"', time: '10 minutes ago', dotColor: 'var(--red)' },
+  { agent: 'AG-06 AI Displacement Scanner', color: 'var(--indigo)', body: 'Scanning tech deliverables for Apex Dynamics... evaluated 4 tasks with >80% displacement potential. Playbook recommended.', time: '32 minutes ago', dotColor: 'var(--indigo)' },
+  { agent: 'AG-12 Outreach Draft Generator', color: 'var(--pink-hi)', body: 'Drafted zero-pressure executive alignment email for Drift Capital. Ready in Priority Queue.', time: '1 hour ago', dotColor: 'var(--violet)' }
+]
+
 const AGENTS_DATA = [
   { id: 'AG-01', name: 'Value Chain Specialist', status: 'Idle', lastAction: 'Mapped Pinnacle Group stakeholder relationships', queries: 'Reads consulting reports, matches client organizational structures' },
   { id: 'AG-02', name: 'Exec Gap Analyst', status: 'Analyzing', lastAction: 'Reviewing Meridian Capital communications', queries: 'Scans for VP changes, email sentiment on decision makers' },
@@ -373,6 +385,7 @@ export default function Dashboard() {
   const [emailDraftBody, setEmailDraftBody] = useState('Hi Greg,\n\nI noticed we postponed the steering committee review. To ensure we maintain project momentum and don\'t slide back from key milestones, I suggest we schedule a quick 10-minute alignment sync next week.\n\nLet me know your thoughts.\n\nBest,\nDemo Team')
   const [isSendingEmail, setIsSendingEmail] = useState(false)
   const [showToast, setShowToast] = useState<string | null>(null)
+  const [showNotifications, setShowNotifications] = useState(false)
   
   // New States
   const [showDiagnosticsFor, setShowDiagnosticsFor] = useState<string | null>(null)
@@ -926,7 +939,13 @@ export default function Dashboard() {
           <div className="topbar-search">
             <div className="search-wrap">
               <span className="search-icon"><Icon.Search /></span>
-              <input className="search-input" type="text" placeholder="Search clients, agents, actions…" />
+              <input 
+                className="search-input" 
+                type="text" 
+                placeholder="Search clients, agents, actions…" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
           <div className="topbar-right">
@@ -934,8 +953,54 @@ export default function Dashboard() {
               <div className="live-dot" />
               12 agents live
             </div>
-            <div className="icon-btn">
-              <Icon.Bell /><span className="notif-pip">3</span>
+            <div style={{ position: 'relative' }}>
+              <div className="icon-btn" onClick={() => setShowNotifications(!showNotifications)} style={{ cursor: 'pointer', background: showNotifications ? 'rgba(255,46,191,0.1)' : 'transparent' }}>
+                <Icon.Bell /><span className="notif-pip">3</span>
+              </div>
+              {showNotifications && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '8px',
+                  width: '320px',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--r-md)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                  zIndex: 9999,
+                  padding: '12px 0',
+                  animation: 'rise 0.2s ease both'
+                }}>
+                  <div style={{ padding: '0 16px 8px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-1)' }}>Notifications</div>
+                    <div style={{ fontSize: 10, color: 'var(--pink-hi)', cursor: 'pointer' }} onClick={() => setShowNotifications(false)}>Clear all</div>
+                  </div>
+                  <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} className="interactive-card" onClick={() => { setActiveTab('action_items'); setShowNotifications(false); }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--red)' }}>High Risk Alert</span>
+                        <span style={{ fontSize: 9, color: 'var(--text-3)' }}>10m ago</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.4 }}>AG-03 Stall Detection flagged critical delay phrasing on Halcyon Systems thread.</div>
+                    </div>
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} className="interactive-card" onClick={() => { setActiveTab('action_items'); setShowNotifications(false); }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--amber)' }}>Action Required</span>
+                        <span style={{ fontSize: 9, color: 'var(--text-3)' }}>32m ago</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.4 }}>AG-06 finished Apex Dynamics value chain mapping. Draft ready.</div>
+                    </div>
+                    <div style={{ padding: '12px 16px', cursor: 'pointer' }} className="interactive-card" onClick={() => { setActiveTab('home'); setShowNotifications(false); }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--green)' }}>System Event</span>
+                        <span style={{ fontSize: 9, color: 'var(--text-3)' }}>1h ago</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.4 }}>Orchestrator successfully synchronized with Google Calendar events.</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="icon-btn"><Icon.MoreVert /></div>
             <button className="console-toggle" onClick={() => setDevConsoleOpen(v => !v)}>
@@ -1647,12 +1712,25 @@ export default function Dashboard() {
 
               {/* Workspace Section */}
               <div className="card" style={{ marginTop: 8 }}>
-                <div className="card-hd">
+                <div className="card-hd" style={{ flexWrap: 'wrap', gap: 12 }}>
                   <div className="card-hd-title"><div className="title-pip" style={{ background: 'var(--green)', boxShadow: '0 0 8px var(--green)' }} />Consultant Workspace</div>
-                  <div className="tab-group">
-                    <div className={`tab ${homeSubTab === 'mails' ? 'active' : ''}`} onClick={() => setHomeSubTab('mails')}>Mails & Updates</div>
-                    <div className={`tab ${homeSubTab === 'notes' ? 'active' : ''}`} onClick={() => setHomeSubTab('notes')}>Notes & Minutes</div>
-                    <div className={`tab ${homeSubTab === 'calendar' ? 'active' : ''}`} onClick={() => setHomeSubTab('calendar')}>Calendar Events</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <span style={{ position: 'absolute', left: 8, color: 'var(--text-3)', display: 'flex', alignItems: 'center' }}><Icon.Search /></span>
+                      <input 
+                        type="text" 
+                        placeholder="Search workspace..." 
+                        className="search-input" 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        style={{ width: 180, height: 28, padding: '0 10px 0 26px', fontSize: 11, background: 'var(--bg-inset)' }}
+                      />
+                    </div>
+                    <div className="tab-group">
+                      <div className={`tab ${homeSubTab === 'mails' ? 'active' : ''}`} onClick={() => setHomeSubTab('mails')}>Mails & Updates</div>
+                      <div className={`tab ${homeSubTab === 'notes' ? 'active' : ''}`} onClick={() => setHomeSubTab('notes')}>Notes & Minutes</div>
+                      <div className={`tab ${homeSubTab === 'calendar' ? 'active' : ''}`} onClick={() => setHomeSubTab('calendar')}>Calendar Events</div>
+                    </div>
                   </div>
                 </div>
                 <div style={{ padding: 20, minHeight: 280, display: 'flex', flexDirection: 'column' }}>
@@ -1660,14 +1738,30 @@ export default function Dashboard() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, flex: 1 }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' }}>Recent Client Mails</div>
-                        <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 12, cursor: 'pointer' }} className="interactive-card">
-                          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Sarah Jenkins (Pinnacle Group)</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-2)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>Re: Phase 3 Kickoff and Resource Allocation</div>
-                        </div>
-                        <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 12, cursor: 'pointer' }} className="interactive-card">
-                          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Elena Rostova (NovaTech)</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-2)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>Tech stack optimization pattern feedback</div>
-                        </div>
+                        {(() => {
+                          const filteredMails = MOCK_MAILS.filter(m => 
+                            m.client.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            m.sender.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            m.subject.toLowerCase().includes(searchQuery.toLowerCase())
+                          );
+                          if (filteredMails.length === 0) {
+                            return <div style={{ fontSize: 11, color: 'var(--text-3)', padding: 12 }}>No matching emails found.</div>;
+                          }
+                          return filteredMails.map((m, idx) => (
+                            <div 
+                              key={idx} 
+                              style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 12, cursor: 'pointer' }} 
+                              className="interactive-card"
+                              onClick={() => {
+                                setActiveTab('clients');
+                                setSelectedClient(m.client);
+                              }}
+                            >
+                              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{m.sender} ({m.client})</div>
+                              <div style={{ fontSize: 11, color: 'var(--text-2)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{m.subject}</div>
+                            </div>
+                          ));
+                        })()}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' }}>Send Quick Update</div>
@@ -1714,32 +1808,28 @@ export default function Dashboard() {
                 <div className="card">
                   <div className="card-hd"><div className="card-hd-title"><div className="title-pip" />Active Agent Actions (Simulated Flow)</div></div>
                   <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                      <div className="live-dot" style={{ marginTop: 4 }} />
-                      <div>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 11, color: 'var(--pink-hi)' }}>AG-03 Stall Detection Agent</div>
-                        <div style={{ fontSize: 13, color: 'var(--text-1)', marginTop: 2 }}>Analyzing Gmail communications for **Halcyon Systems**... flagged phrase: *"push milestones to next month"*</div>
-                        <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4 }}>10 minutes ago</div>
-                      </div>
-                    </div>
-                    <div style={{ height: 1, background: 'var(--border)' }} />
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                      <div className="live-dot" style={{ background: 'var(--indigo)', boxShadow: 'none', marginTop: 4 }} />
-                      <div>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 11, color: 'var(--indigo)' }}>AG-06 AI Displacement Scanner</div>
-                        <div style={{ fontSize: 13, color: 'var(--text-1)', marginTop: 2 }}>Scanning tech deliverables for **Apex Dynamics**... evaluated 4 tasks with &gt;80% displacement potential. Playbook recommended.</div>
-                        <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4 }}>32 minutes ago</div>
-                      </div>
-                    </div>
-                    <div style={{ height: 1, background: 'var(--border)' }} />
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                      <div className="live-dot" style={{ background: 'var(--violet)', boxShadow: 'none', marginTop: 4 }} />
-                      <div>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 11, color: 'var(--pink-hi)' }}>AG-12 Outreach Draft Generator</div>
-                        <div style={{ fontSize: 13, color: 'var(--text-1)', marginTop: 2 }}>Drafted zero-pressure executive alignment email for **Drift Capital**. Ready in Priority Queue.</div>
-                        <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4 }}>1 hour ago</div>
-                      </div>
-                    </div>
+                    {(() => {
+                      const filteredFlow = MOCK_FLOW_ACTIONS.filter(act => 
+                        act.agent.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        act.body.toLowerCase().includes(searchQuery.toLowerCase())
+                      );
+                      if (filteredFlow.length === 0) {
+                        return <div style={{ fontSize: 11, color: 'var(--text-3)', padding: 12 }}>No matching agent activities found.</div>;
+                      }
+                      return filteredFlow.map((act, idx) => (
+                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                          {idx > 0 && <div style={{ height: 1, background: 'var(--border)' }} />}
+                          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                            <div className="live-dot" style={{ background: act.dotColor, boxShadow: act.dotColor === 'var(--red)' ? '0 0 6px var(--red)' : 'none', marginTop: 4 }} />
+                            <div>
+                              <div style={{ fontFamily: 'JetBrains Mono', fontSize: 11, color: act.color }}>{act.agent}</div>
+                              <div style={{ fontSize: 13, color: 'var(--text-1)', marginTop: 2 }}>{act.body}</div>
+                              <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4 }}>{act.time}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ));
+                    })()}
                   </div>
                 </div>
 
