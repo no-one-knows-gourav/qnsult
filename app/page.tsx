@@ -31,7 +31,7 @@ export default function LandingPage() {
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
         scopes: GMAIL_SCOPES,
-        queryParams: { access_type: 'offline', prompt: 'consent' },
+        queryParams: { access_type: 'offline', prompt: 'select_account' },
       },
     })
   }
@@ -70,6 +70,18 @@ export default function LandingPage() {
     return () => clearInterval(t)
   }, [])
 
+  useEffect(() => {
+    const els = document.querySelectorAll('[data-reveal]')
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target) }
+      }),
+      { threshold: 0.08, rootMargin: '0px 0px -48px 0px' }
+    )
+    els.forEach(el => obs.observe(el))
+    return () => obs.disconnect()
+  }, [])
+
   return (
     <>
       <style>{STYLES}</style>
@@ -88,7 +100,8 @@ export default function LandingPage() {
 
         {/* NAV */}
         <nav className="l-nav">
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <img src="/logo.svg" alt="Qnsult" style={{ width: '52px', height: '52px', objectFit: 'contain' }} />
             <div className="l-brand">Qn<em>sult</em></div>
             <div className="l-brand-tag">Gemini · ADK</div>
           </div>
@@ -106,29 +119,29 @@ export default function LandingPage() {
             <img src="/landing_page_5.jpg" alt="" className="wqb-chess-img" />
           </div>
           <div className="wqb-inner">
-            <div className="wqb-rule" />
-            <div className="wqb-eyebrow">Industry Reality Check</div>
-            <blockquote className="wqb-quote">
+            <div className="wqb-rule" data-reveal="fade" />
+            <div className="wqb-eyebrow" data-reveal="left" style={{ transitionDelay: '0.1s' }}>Industry Reality Check</div>
+            <blockquote className="wqb-quote" data-reveal="up" style={{ transitionDelay: '0.2s' }}>
               &ldquo;The most expensive project is the one that ends on time<br />
               — and leaves nothing behind.&rdquo;
             </blockquote>
             <div className="wqb-stats">
-              <div className="wqb-stat">
+              <div className="wqb-stat" data-reveal="left" style={{ transitionDelay: '0.3s' }}>
                 <span className="wqb-num">68%</span>
                 <span className="wqb-label">of churned consulting clients described their last project as &ldquo;satisfactory&rdquo;</span>
               </div>
               <div className="wqb-vr" />
-              <div className="wqb-stat">
+              <div className="wqb-stat" data-reveal="up" style={{ transitionDelay: '0.4s' }}>
                 <span className="wqb-num">$2.4M</span>
                 <span className="wqb-label">average ACV lost per wall-trapped account over a 3-year window</span>
               </div>
               <div className="wqb-vr" />
-              <div className="wqb-stat">
+              <div className="wqb-stat" data-reveal="right" style={{ transitionDelay: '0.5s' }}>
                 <span className="wqb-num">83%</span>
                 <span className="wqb-label">of project stalls are detectable 4–6 weeks before the client goes quiet</span>
               </div>
             </div>
-            <div className="wqb-rule" />
+            <div className="wqb-rule" data-reveal="fade" style={{ transitionDelay: '0.6s' }} />
           </div>
         </div>
 
@@ -240,7 +253,7 @@ export default function LandingPage() {
                 </circle>
                 {/* Detection chip (above) */}
                 <rect x="490" y="52" width="116" height="26" rx="13" fill="rgba(255,46,191,0.08)" stroke="rgba(255,46,191,0.5)" strokeWidth="1"/>
-                <text x="548" y="69" textAnchor="middle" fill="#FF2EBF" fontSize="8.5" fontFamily="JetBrains Mono" fontWeight="700">⚡ AG-03 · DETECTS</text>
+                <text x="548" y="69" textAnchor="middle" fill="#FF2EBF" fontSize="8.5" fontFamily="JetBrains Mono" fontWeight="700">• AG-03 · DETECTS</text>
                 {/* Connector from chip to node */}
                 <line x1="548" y1="79" x2="548" y2="97" stroke="rgba(255,46,191,0.3)" strokeWidth="1" strokeDasharray="3 2"/>
                 {/* 6wk window arrow pointing to wall */}
@@ -259,7 +272,7 @@ export default function LandingPage() {
                 <line x1="601" y1="85" x2="609" y2="100" stroke="rgba(239,68,68,0.5)" strokeWidth="1"/>
                 <line x1="601" y1="115" x2="609" y2="130" stroke="rgba(239,68,68,0.5)" strokeWidth="1"/>
                 {/* Wall label */}
-                <text x="605" y="20" textAnchor="middle" fill="rgba(239,68,68,0.9)" fontSize="8.5" fontFamily="JetBrains Mono" fontWeight="700">⊘ THE WALL</text>
+                <text x="605" y="20" textAnchor="middle" fill="rgba(239,68,68,0.9)" fontSize="8.5" fontFamily="JetBrains Mono" fontWeight="700">× THE WALL</text>
               </g>
 
               {/* ── POST-WALL: QNSULT RECOVERY PATH ── */}
@@ -335,7 +348,7 @@ export default function LandingPage() {
         </div>
 
         {/* PLATFORM VISUAL — landing_page_2 */}
-        <div className="platform-visual">
+        <div className="platform-visual" data-reveal="up">
           <div className="platform-frame">
             <div className="platform-frame-top">
               <div className="pf-dot" style={{ background: 'var(--red)' }} />
@@ -362,17 +375,17 @@ export default function LandingPage() {
         {/* ANIMATED STATS */}
         <div className="stats-wrap" ref={statsRef}>
           <div className="stats-bar">
-            <div className="stat-cell">
+            <div className="stat-cell" data-reveal="left" style={{ transitionDelay: '0s' }}>
               <div className="stat-num">{counters.weeks}wk</div>
               <div className="stat-label">Stall Detection Lead Time</div>
               <div className="stat-sub">Before client goes quiet</div>
             </div>
-            <div className="stat-cell">
+            <div className="stat-cell" data-reveal="up" style={{ transitionDelay: '0.15s' }}>
               <div className="stat-num">{counters.ltv}×</div>
               <div className="stat-label">Higher LTV</div>
               <div className="stat-sub">Strategic vs. transactional accounts</div>
             </div>
-            <div className="stat-cell">
+            <div className="stat-cell" data-reveal="right" style={{ transitionDelay: '0.3s' }}>
               <div className="stat-num">{counters.agents}</div>
               <div className="stat-label">Agents Running Continuously</div>
               <div className="stat-sub">Across every client account</div>
@@ -384,10 +397,10 @@ export default function LandingPage() {
 
         {/* AGENTIC WORKFLOW */}
         <section className="l-section" ref={workflowRef}>
-          <div className="section-label">The Intelligence Network</div>
-          <h2 className="section-h2">12 agents. Continuously <em>connected</em>.</h2>
-          <p className="section-sub">Every signal flows from your data through specialist agents to the Momentum orchestrator — continuously, in real time, across every client account.</p>
-          <div className="platform-frame pf-section-frame">
+          <div className="section-label" data-reveal="left">The Intelligence Network</div>
+          <h2 className="section-h2" data-reveal="left" style={{ transitionDelay: '0.1s' }}>12 agents. Continuously <em>connected</em>.</h2>
+          <p className="section-sub" data-reveal="left" style={{ transitionDelay: '0.2s' }}>Every signal flows from your data through specialist agents to the Momentum orchestrator — continuously, in real time, across every client account.</p>
+          <div className="platform-frame pf-section-frame" data-reveal="up" style={{ transitionDelay: '0.3s' }}>
             <div className="platform-frame-top">
               <div className="pf-dot" style={{background:'var(--red)'}}/>
               <div className="pf-dot" style={{background:'var(--amber)'}}/>
@@ -396,6 +409,9 @@ export default function LandingPage() {
             </div>
             <div className="pf-content">
           <div className={`workflow-scene ${workflowVisible ? 'wf-visible' : ''}`}>
+            {/* Logo watermark inside diagram */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="" aria-hidden="true" className="wf-logo-wm" />
             <svg viewBox="0 0 740 260" className="workflow-svg" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="wf-grad-pink" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -551,9 +567,9 @@ export default function LandingPage() {
 
         {/* THE WALL — DEEP DIVE */}
         <section className="l-section">
-          <div className="section-label">The Problem</div>
-          <h2 className="section-h2">The <em>Project Wall</em> is structural.</h2>
-          <p className="section-sub">
+          <div className="section-label" data-reveal="left">The Problem</div>
+          <h2 className="section-h2" data-reveal="left" style={{ transitionDelay: '0.1s' }}>The <em>Project Wall</em> is structural.</h2>
+          <p className="section-sub" data-reveal="left" style={{ transitionDelay: '0.2s' }}>
             It&apos;s not a client relationship problem. It&apos;s a geometry problem.
             Most consulting engagements operate entirely in the wrong quadrant —
             and every project restart resets the clock.
@@ -569,11 +585,11 @@ export default function LandingPage() {
             </div>
             <div className="pf-content">
           <div className="chart-accent-wrap">
-            <div className="chart-accent-img-col">
+            <div className="chart-accent-img-col" data-reveal="left" style={{ transitionDelay: '0.1s' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/landing_page_3.png" alt="" className="chart-accent-img" />
             </div>
-            <div className="wall-chart-wrap" ref={chartRef}>
+            <div className="wall-chart-wrap" ref={chartRef} data-reveal="right" style={{ transitionDelay: '0.2s' }}>
               <div className="wcl-y">STRATEGIC VALUE ↑</div>
               <svg className="wall-chart" viewBox="0 0 540 195" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
@@ -667,24 +683,24 @@ export default function LandingPage() {
           <div className="problem-grid">
             <div className="prob-card wall">
               <div className="prob-glow amber-glow" />
-              <div className="prob-icon wall-icon">⊘</div>
+              <div className="prob-icon wall-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
               <div className="prob-title">The Project Wall</div>
               <div className="prob-desc">A structural barrier that traps consultancies in low-value transactional engagements. Each new project resets the clock. Relationships stay operational, never reaching the executive decision-makers who control long-term mandates.</div>
               <div className="prob-signals">
                 {['Exec contact fades', 'Renewal risk rises', 'Competitor positioning'].map(s => (
-                  <div key={s} className="prob-signal amber-signal">⚠ {s}</div>
+                  <div key={s} className="prob-signal amber-signal">{s}</div>
                 ))}
               </div>
               <div className="prob-tag amber-tag">Structural</div>
             </div>
             <div className="prob-card danger">
               <div className="prob-glow red-glow" />
-              <div className="prob-icon danger-icon">⚡</div>
+              <div className="prob-icon danger-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
               <div className="prob-title">The AI Danger Zone</div>
               <div className="prob-desc">The execution and delivery work that defines front-of-wall engagements is precisely what AI tools are absorbing fastest. The value proposition erodes without warning — nobody is monitoring the boundary as it shifts.</div>
               <div className="prob-signals">
                 {['Margin compression', 'Commoditisation creep', 'Scope erosion'].map(s => (
-                  <div key={s} className="prob-signal red-signal">⚡ {s}</div>
+                  <div key={s} className="prob-signal red-signal">{s}</div>
                 ))}
               </div>
               <div className="prob-tag red-tag">Existential</div>
@@ -696,10 +712,10 @@ export default function LandingPage() {
 
         {/* TESTIMONIALS */}
         <section className="l-section" style={{ paddingBottom: 0 }}>
-          <div className="section-label">From the field</div>
-          <h2 className="section-h2">They saw the wall. <em>Too late.</em></h2>
+          <div className="section-label" data-reveal="up">From the field</div>
+          <h2 className="section-h2" data-reveal="up" style={{ transitionDelay: '0.12s' }}>They saw the wall. <em>Too late.</em></h2>
         </section>
-        <div className="t-stage">
+        <div className="t-stage" data-reveal="up" style={{ transitionDelay: '0.1s' }}>
           {TESTIMONIALS.map((t, i) => (
             <div key={i} className={`t-card ${i === activeTestimonial ? 'active' : ''}`} onClick={() => setActiveTestimonial(i)}>
               <div className="t-qmark">&ldquo;</div>
@@ -725,9 +741,9 @@ export default function LandingPage() {
 
         {/* ESCAPE TIMELINE */}
         <section className="l-section" ref={escapeRef}>
-          <div className="section-label">The Qnsult Difference</div>
-          <h2 className="section-h2">Same project. <em>Different trajectory.</em></h2>
-          <p className="section-sub">The engagement starts identically. Qnsult changes what happens beneath the surface — from week one.</p>
+          <div className="section-label" data-reveal="left">The Qnsult Difference</div>
+          <h2 className="section-h2" data-reveal="left" style={{ transitionDelay: '0.1s' }}>Same project. <em>Different trajectory.</em></h2>
+          <p className="section-sub" data-reveal="left" style={{ transitionDelay: '0.2s' }}>The engagement starts identically. Qnsult changes what happens beneath the surface — from week one.</p>
           <div className="platform-frame pf-section-frame">
             <div className="platform-frame-top">
               <div className="pf-dot" style={{background:'var(--red)'}}/>
@@ -739,7 +755,7 @@ export default function LandingPage() {
           <div className={`escape-grid ${escapeVisible ? 'esc-visible' : ''}`}>
             <div className="esc-col">
               <div className="esc-header">
-                <div className="esc-icon red-esc-icon">✕</div>
+                <div className="esc-icon red-esc-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
                 <div>
                   <div className="esc-title">Without Qnsult</div>
                   <div className="esc-sub">The standard engagement arc</div>
@@ -761,7 +777,7 @@ export default function LandingPage() {
             </div>
             <div className="esc-col">
               <div className="esc-header">
-                <div className="esc-icon pink-esc-icon">↗</div>
+                <div className="esc-icon pink-esc-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></div>
                 <div>
                   <div className="esc-title">With Qnsult</div>
                   <div className="esc-sub">Agents working beneath the surface</div>
@@ -793,12 +809,12 @@ export default function LandingPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/landing_page_1.png" alt="" className="agent-bg-img-el" />
           </div>
-          <div className="section-label">The System</div>
-          <h2 className="section-h2">12 agents. One <em>diagonal arrow</em>.</h2>
-          <p className="section-sub">Every prescribed upstream move runs as an agent behaviour, continuously, across every client account. Click any agent to see what it watches.</p>
+          <div className="section-label" data-reveal="left">The System</div>
+          <h2 className="section-h2" data-reveal="left" style={{ transitionDelay: '0.1s' }}>12 agents. One <em>diagonal arrow</em>.</h2>
+          <p className="section-sub" data-reveal="left" style={{ transitionDelay: '0.2s' }}>Every prescribed upstream move runs as an agent behaviour, continuously, across every client account. Click any agent to see what it watches.</p>
           <div className="agent-grid">
             {AGENTS.map((a, i) => (
-              <div key={a.num} className={`agent-card ${activeAgent === i ? 'a-expanded' : ''}`} onClick={() => setActiveAgent(activeAgent === i ? null : i)}>
+              <div key={a.num} className={`agent-card ${activeAgent === i ? 'a-expanded' : ''}`} data-reveal={i % 2 === 0 ? 'left' : 'right'} style={{ transitionDelay: `${0.05 * i}s` }} onClick={() => setActiveAgent(activeAgent === i ? null : i)}>
                 <div className="agent-inner">
                   <div className="agent-num">{a.num}</div>
                   <div className="agent-name">{a.name}</div>
@@ -813,11 +829,11 @@ export default function LandingPage() {
                     </div>
                   )}
                 </div>
-                <div className="agent-hint">{activeAgent === i ? '↑ less' : '↓ signals'}</div>
+                <div className="agent-hint">{activeAgent === i ? '− less' : '+ signals'}</div>
               </div>
             ))}
           </div>
-          <div className="orch-card">
+          <div className="orch-card" data-reveal="scale" style={{ transitionDelay: '0.15s' }}>
             <div className="orch-glow" />
             <div className="orch-num">12</div>
             <div>
@@ -832,24 +848,30 @@ export default function LandingPage() {
 
         {/* ABOUT */}
         <section className="about-section l-section">
-          <div className="about-header">
+          {/* Large logo watermark — gradient fade from right */}
+          <div className="about-logo-watermark">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="" aria-hidden="true" className="about-logo-wm-img" />
+          </div>
+
+          <div className="about-header" data-reveal="left">
             <div className="section-label">About Qnsult</div>
             <h2 className="section-h2">Built for the consultancy<br />that refuses to play <em>defence</em>.</h2>
           </div>
 
           {/* Full-width paragraphs */}
           <div className="about-paras">
-            <p className="about-para">
+            <p className="about-para" data-reveal="up" style={{ transitionDelay: '0.1s' }}>
               Qnsult is a 12-agent intelligence system that operates beneath every engagement. While your team is heads-down in delivery, it continuously tracks exec contact frequency, maps strategic whitespace, and detects stall patterns — four to six weeks before any signal surfaces to the client.
             </p>
-            <p className="about-para">
+            <p className="about-para" data-reveal="up" style={{ transitionDelay: '0.22s' }}>
               Most firms discover the problem when the renewal call doesn't happen. Qnsult exists to close that window entirely: one always-on layer, across every account, producing a single human-facing dashboard with no noise and no distraction.
             </p>
           </div>
 
           {/* Features + image side-by-side */}
           <div className="about-grid">
-            <div className="about-content">
+            <div className="about-content" data-reveal="left" style={{ transitionDelay: '0.1s' }}>
               <div className="about-features">
                 {ABOUT_FEATURES.map((f, i) => (
                   <div key={i} className="about-feat">
@@ -873,7 +895,7 @@ export default function LandingPage() {
             </div>
 
             {/* macOS mockup with landing_page_4 */}
-            <div className="about-mockup">
+            <div className="about-mockup" data-reveal="right" style={{ transitionDelay: '0.2s' }}>
               <div className="platform-frame about-frame">
                 <div className="platform-frame-top">
                   <div className="pf-dot" style={{ background: 'var(--red)' }} />
@@ -900,25 +922,38 @@ export default function LandingPage() {
 
         {/* FINAL CTA */}
         <section className="final-cta">
-          <div className="cta-card">
+          <div className="cta-card" data-reveal="scale">
             <div className="cta-orb" />
-            <div className="section-label" style={{ marginBottom: 14 }}>Start now</div>
-            <h3 className="cta-h3">Stop losing accounts you <em>already won</em>.</h3>
-            <p className="cta-sub">Connect your Google Workspace. Qnsult reads Gmail for client signals, drafts stall recovery outreach, and labels executive threads — so nothing falls through during busy delivery periods.</p>
-            <button className="hero-btn-primary" onClick={signInWithGoogle} style={{ margin: '0 auto' }}>
-              <GoogleIcon />
-              Connect Google Workspace
-            </button>
-            <div className="cta-perms">
-              {['Gmail read access', 'Draft + send emails', 'Auto-label threads', 'Never posts without approval'].map(p => (
-                <div key={p} className="cta-perm"><div className="perm-dot" />{p}</div>
-              ))}
+            <div className="cta-inner">
+              {/* Logo column */}
+              <div className="cta-logo-col">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.svg" alt="Qnsult" className="cta-logo-img" />
+              </div>
+              {/* Content column */}
+              <div className="cta-content-col">
+                <div className="section-label" style={{ marginBottom: 14 }}>Start now</div>
+                <h3 className="cta-h3">Stop losing accounts you <em>already won</em>.</h3>
+                <p className="cta-sub">Connect your Google Workspace. Qnsult reads Gmail for client signals, drafts stall recovery outreach, and labels executive threads — so nothing falls through during busy delivery periods.</p>
+                <button className="hero-btn-primary" onClick={signInWithGoogle}>
+                  <GoogleIcon />
+                  Connect Google Workspace
+                </button>
+                <div className="cta-perms">
+                  {['Gmail read access', 'Draft + send emails', 'Auto-label threads', 'Never posts without approval'].map(p => (
+                    <div key={p} className="cta-perm"><div className="perm-dot" />{p}</div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         <footer className="l-footer">
-          <div className="l-footer-brand">Qn<em>sult</em></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <img src="/logo.svg" alt="Qnsult" style={{ width: '28px', height: '28px', objectFit: 'contain', opacity: 0.7 }} />
+            <div className="l-footer-brand">Qn<em>sult</em></div>
+          </div>
           <div className="l-footer-note">Built on Google Cloud ADK · MongoDB Atlas · Gemini 2.0 Flash</div>
         </footer>
 
@@ -1028,6 +1063,18 @@ const JOURNEY_STAGES = [
 ]
 
 const STYLES = `
+/* === SCROLL REVEAL === */
+[data-reveal] {
+  opacity: 0;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-reveal="left"]  { transform: translateX(-60px); }
+[data-reveal="right"] { transform: translateX(60px); }
+[data-reveal="up"]    { transform: translateY(44px); }
+[data-reveal="fade"]  { transform: none; }
+[data-reveal="scale"] { transform: scale(0.93) translateY(24px); }
+[data-reveal].is-visible { opacity: 1 !important; transform: none !important; }
+
 /* === KEYFRAMES === */
 @keyframes wave-gradient {
   0%   { background-position: 0% 50%; }
@@ -1507,14 +1554,22 @@ const STYLES = `
 
 /* WORKFLOW */
 .workflow-scene {
+  position: relative; overflow: hidden;
   border-radius: var(--r-xl); padding: 40px 24px 32px;
   background: var(--bg-card); border: 1px solid rgba(255,46,191,0.1);
   opacity: 0; transform: translateY(20px);
   transition: opacity 0.7s ease, transform 0.7s ease;
   animation: border-wave 6s ease infinite;
 }
+.wf-logo-wm {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 52%; height: auto;
+  opacity: 0.13; pointer-events: none; z-index: 0;
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 20%, rgba(0,0,0,0.6) 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 20%, rgba(0,0,0,0.6) 55%, transparent 100%);
+}
 .workflow-scene.wf-visible { opacity: 1; transform: translateY(0); }
-.workflow-svg { width: 100%; height: auto; display: block; }
+.workflow-svg { position: relative; z-index: 1; width: 100%; height: auto; display: block; }
 
 /* CHART SECTION with image accent */
 .chart-accent-wrap {
@@ -1631,7 +1686,7 @@ const STYLES = `
 }
 .agent-bg-img-el {
   width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
-  filter: hue-rotate(300deg) saturate(1.2) brightness(0.45);
+  filter: grayscale(1) sepia(1) hue-rotate(280deg) saturate(4) brightness(0.45);
   -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 0%, transparent 80%);
   mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 0%, transparent 80%);
 }
@@ -1678,10 +1733,21 @@ const STYLES = `
 .orch-desc  { font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--text-2); line-height: 1.6; }
 
 /* ABOUT SECTION */
-.about-section { padding-top: 80px; padding-bottom: 80px; }
-.about-header { margin-bottom: 40px; }
+.about-section { position: relative; overflow: hidden; padding-top: 80px; padding-bottom: 80px; }
+.about-logo-watermark {
+  position: absolute; right: -6%; top: 60px;
+  width: 46%; pointer-events: none; z-index: 0;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 20%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0.7) 65%, transparent 100%),
+                      linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 20%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0.7) 65%, transparent 100%),
+              linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+  -webkit-mask-composite: intersect;
+  mask-composite: intersect;
+}
+.about-logo-wm-img { width: 100%; height: auto; opacity: 0.42; }
+.about-header { position: relative; z-index: 1; margin-bottom: 40px; }
 
-.about-paras { margin-bottom: 52px; max-width: 780px; }
+.about-paras { position: relative; z-index: 1; margin-bottom: 52px; max-width: 780px; }
 
 .about-para {
   font-family: 'Outfit', sans-serif; font-size: 16px; color: var(--text-2);
@@ -1690,6 +1756,7 @@ const STYLES = `
 .about-para:last-of-type { margin-bottom: 0; }
 
 .about-grid {
+  position: relative; z-index: 1;
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 56px; align-items: start;
 }
@@ -1779,15 +1846,19 @@ const STYLES = `
 }
 
 /* FINAL CTA */
-.final-cta { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 80px 40px 120px; text-align: center; }
+.final-cta { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding: 80px 40px 120px; }
 .cta-card {
   background: var(--bg-card); border: 1px solid rgba(255,46,191,0.15);
-  border-radius: var(--r-xl); padding: 56px 48px;
+  border-radius: var(--r-xl); padding: 40px 48px 40px 20px;
   position: relative; overflow: hidden;
   animation: border-wave 5s ease infinite, glow-wave 5s ease infinite;
 }
 .cta-orb { position: absolute; top: -80px; left: 50%; transform: translateX(-50%); width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgba(255,46,191,0.12) 0%, transparent 65%); pointer-events: none; animation: orb-drift-a 12s ease-in-out infinite; }
-.cta-h3 { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 36px; letter-spacing: -0.03em; color: var(--text-1); margin-bottom: 16px; line-height: 1.15; }
+.cta-inner { display: flex; align-items: flex-start; gap: 24px; position: relative; z-index: 1; }
+.cta-logo-col { flex-shrink: 0; display: flex; align-items: flex-start; justify-content: center; margin-top: -16px; }
+.cta-logo-img { width: 140px; height: 140px; object-fit: contain; }
+.cta-content-col { flex: 1; text-align: left; }
+.cta-h3 { position: relative; z-index: 1; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 36px; letter-spacing: -0.03em; color: var(--text-1); margin-bottom: 16px; line-height: 1.15; }
 .cta-h3 em {
   font-style: normal;
   background: linear-gradient(90deg, var(--pink), var(--violet), var(--pink));
@@ -1795,7 +1866,7 @@ const STYLES = `
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   animation: wave-gradient 3.5s ease infinite;
 }
-.cta-sub { font-family: 'Outfit', sans-serif; font-size: 15px; color: var(--text-2); line-height: 1.65; margin-bottom: 36px; max-width: 520px; margin-left: auto; margin-right: auto; }
+.cta-sub { position: relative; z-index: 1; font-family: 'Outfit', sans-serif; font-size: 15px; color: var(--text-2); line-height: 1.65; margin-bottom: 36px; max-width: 520px; }
 .cta-perms { display: flex; justify-content: center; gap: 20px; margin-top: 24px; flex-wrap: wrap; }
 .cta-perm  { display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-3); letter-spacing: 0.06em; text-transform: uppercase; }
 .perm-dot  { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; }

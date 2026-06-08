@@ -8,8 +8,22 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) return NextResponse.redirect(`${origin}${next}`)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (!error && data.session) {
+      // Persist Google OAuth tokens so ADK agents can call Gmail/Calendar on the user's behalf
+      const { provider_token, provider_refresh_token } = data.session
+      if (provider_token) {
+        await supabase.from('user_tokens').upsert({
+          user_id: data.session.user.id,
+          provider: 'google',
+          access_token: provider_token,
+          refresh_token: provider_refresh_token ?? null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,provider' })
+      }
+      return NextResponse.redirect(`${origin}${next}`)
+    }
   }
 
   return NextResponse.redirect(`${origin}/?error=auth_failed`)
