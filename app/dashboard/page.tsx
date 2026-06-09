@@ -458,7 +458,7 @@ export default function Dashboard() {
   const [selectedAgent, setSelectedAgent] = useState('AG-03')
   const [selectedPattern, setSelectedPattern] = useState('Account War Book')
   const [patternFilter, setPatternFilter] = useState('All')
-  const [completedActions, setCompletedActions] = useState<string[]>([])
+  const [_completedActions, setCompletedActions] = useState<string[]>([])
   const [actionItems, setActionItems] = useState<ActionItem[]>(STATIC_ACTION_ITEMS)
   const [searchQuery, setSearchQuery] = useState('')
   const [emailDraftBody, setEmailDraftBody] = useState('Hi Greg,\n\nI noticed we postponed the steering committee review. To ensure we maintain project momentum and don\'t slide back from key milestones, I suggest we schedule a quick 10-minute alignment sync next week.\n\nLet me know your thoughts.\n\nBest,\nDemo Team')
@@ -1879,7 +1879,7 @@ export default function Dashboard() {
                       Number(seg(counts['On Track'])),
                       Number(seg(counts.Accelerating)),
                     ]
-                    const offsets = gaps.reduce((acc, g, i) => [...acc, -(acc[i] + (i > 0 ? gaps[i-1] : 0))], [0])
+                    const _offsets = gaps.reduce((acc, g, i) => [...acc, -(acc[i] + (i > 0 ? gaps[i-1] : 0))], [0])
                     // cumulative offset: each segment starts after the previous ones
                     let cumOff = 0
                     const segs = [
@@ -1981,7 +1981,7 @@ export default function Dashboard() {
                   return revOk && hcOk
                 })
                 const hovered = mapClients.find(c => c.name === mapHoveredClient)
-                const chipBtn = (label: string, active: boolean, onClick: () => void) => (
+                const _chipBtn = (label: string, active: boolean, onClick: () => void) => (
                   <button key={label} onClick={onClick} style={{ padding: '4px 10px', borderRadius: 4, background: active ? 'var(--pink-dim)' : 'var(--bg-inset)', border: `1px solid ${active ? 'rgba(255,46,191,0.3)' : 'var(--border)'}`, color: active ? 'var(--pink-hi)' : 'var(--text-2)', fontFamily: 'JetBrains Mono, monospace', fontSize: 10, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.04em' }}>{label}</button>
                 )
                 const rankList = (onClickExtra?: () => void) => [...clients]

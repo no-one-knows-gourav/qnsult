@@ -865,7 +865,7 @@ export default function LandingPage() {
               Qnsult is a 12-agent intelligence system that operates beneath every engagement. While your team is heads-down in delivery, it continuously tracks exec contact frequency, maps strategic whitespace, and detects stall patterns — four to six weeks before any signal surfaces to the client.
             </p>
             <p className="about-para" data-reveal="up" style={{ transitionDelay: '0.22s' }}>
-              Most firms discover the problem when the renewal call doesn't happen. Qnsult exists to close that window entirely: one always-on layer, across every account, producing a single human-facing dashboard with no noise and no distraction.
+              Most firms discover the problem when the renewal call doesn&apos;t happen. Qnsult exists to close that window entirely: one always-on layer, across every account, producing a single human-facing dashboard with no noise and no distraction.
             </p>
           </div>
 
