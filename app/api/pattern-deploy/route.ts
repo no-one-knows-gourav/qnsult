@@ -5,14 +5,10 @@ const APP_NAME = 'agents'
 
 function extractReply(events: unknown[]): string | null {
   if (!Array.isArray(events)) return null
-  // Walk in reverse — take the last meaningful text from any agent
   for (let i = events.length - 1; i >= 0; i--) {
     const ev = events[i] as Record<string, unknown>
-    const content = ev.content as Record<string, unknown> | undefined
-    if (!content) continue
-    const parts = content.parts as Array<Record<string, unknown>> | undefined
-    if (!parts) continue
-    const text = parts.map(p => (p.text as string) ?? '').join('').trim()
+    const parts = ((ev.content as Record<string, unknown> | undefined)?.parts as Array<Record<string, unknown>> | undefined)
+    const text = parts?.map(p => (p.text as string) ?? '').join('').trim()
     if (text) return text
   }
   return null
@@ -20,25 +16,11 @@ function extractReply(events: unknown[]): string | null {
 
 export async function POST(req: NextRequest) {
   const {
-    patternName,
-    trigger,
-    category,
-    difficulty,
-    owner,
-    successRate,
-    deployments,
-    sessionId,
-    userId = 'dashboard-user',
+    patternName, trigger, category, difficulty, owner,
+    successRate, deployments, sessionId, userId = 'dashboard-user',
   } = await req.json() as {
-    patternName: string
-    trigger: string
-    category: string
-    difficulty: string
-    owner: string
-    successRate: string
-    deployments: number
-    sessionId: string
-    userId?: string
+    patternName: string; trigger: string; category: string; difficulty: string
+    owner: string; successRate: string; deployments: number; sessionId: string; userId?: string
   }
 
   if (!patternName || !sessionId) {
@@ -49,11 +31,11 @@ export async function POST(req: NextRequest) {
   try {
     await fetch(
       `${ADK_BASE}/apps/${APP_NAME}/users/${encodeURIComponent(userId)}/sessions/${encodeURIComponent(sessionId)}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) }
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }
     )
   } catch {
     return NextResponse.json(
-      { error: 'ADK server unreachable — run `adk start` in the Terminal tab first.' },
+      { error: 'ADK server unreachable — check that qnsult-adk is running.' },
       { status: 503 }
     )
   }
@@ -76,18 +58,21 @@ Confirm when both writes are done and tell me the pattern is live.`
 
   let runRes: Response
   try {
-    runRes = await fetch(
-      `${ADK_BASE}/apps/${APP_NAME}/users/${encodeURIComponent(userId)}/sessions/${encodeURIComponent(sessionId)}/runs`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ new_message: { role: 'user', parts: [{ text: message }] } }),
-        signal: AbortSignal.timeout(60_000),
-      }
-    )
+    // ADK 2.x: POST /run with appName/userId/sessionId in body
+    runRes = await fetch(`${ADK_BASE}/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        appName: APP_NAME,
+        userId,
+        sessionId,
+        newMessage: { role: 'user', parts: [{ text: message }] },
+      }),
+      signal: AbortSignal.timeout(60_000),
+    })
   } catch {
     return NextResponse.json(
-      { error: 'ADK server unreachable — run `adk start` in the Terminal tab first.' },
+      { error: 'ADK server unreachable — check that qnsult-adk is running.' },
       { status: 503 }
     )
   }

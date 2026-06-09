@@ -106,7 +106,7 @@ export default function LandingPage() {
             <div className="l-brand-tag">Gemini · ADK</div>
           </div>
           <div className="l-nav-right">
-            <button className="l-btn-ghost">How it works</button>
+            <button className="l-btn-ghost" onClick={() => workflowRef.current?.scrollIntoView({ behavior: 'smooth' })}>How it works</button>
             <button className="l-btn-wave" onClick={signInWithGoogle}>Sign in with Google</button>
           </div>
         </nav>

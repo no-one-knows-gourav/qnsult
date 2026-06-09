@@ -509,6 +509,9 @@ export default function Dashboard() {
   const portfolioChatRef = useRef<HTMLDivElement>(null)
   const [deployingPattern, setDeployingPattern] = useState<string | null>(null)
   const [patternDeploySessionId] = useState(() => `pdeploy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
+  const [momentumRunning, setMomentumRunning] = useState(false)
+  const [diagnosticsRunning, setDiagnosticsRunning] = useState<string | null>(null)
+  const [momentumRunSessionId] = useState(() => `triage-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
   const [mapHoveredClient, setMapHoveredClient] = useState<string | null>(null)
   const [queueEvents, setQueueEvents] = useState<{id:string;agent_id:string;event_type:string;payload:Record<string,unknown>;created_at:string}[]>([])
 
@@ -1187,6 +1190,44 @@ export default function Dashboard() {
     }
   }
 
+  async function runMomentum() {
+    if (momentumRunning) return
+    setMomentumRunning(true)
+    setShowToast('Momentum scan initiated — dashboard will update live as agents complete each client')
+    try {
+      await fetch('/api/run-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'triage', sessionId: momentumRunSessionId }),
+      })
+    } catch {
+      // Ignore — fire-and-forget; Supabase Realtime delivers the updates
+    } finally {
+      setMomentumRunning(false)
+      setTimeout(() => setShowToast(null), 6000)
+    }
+  }
+
+  async function runClientAnalysis(clientName: string, clientId?: string | null) {
+    if (diagnosticsRunning) return
+    setDiagnosticsRunning(clientName)
+    setShowToast(`Running full intelligence analysis for ${clientName}…`)
+    try {
+      const res = await fetch('/api/run-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'client', clientName, clientId, sessionId: `diag-${clientId ?? clientName}-${Date.now()}` }),
+      })
+      const data = await res.json() as { message?: string; error?: string }
+      setShowToast(data.message ?? `Analysis complete — ${clientName} scores updated`)
+    } catch {
+      setShowToast(`Analysis for ${clientName} running in background — scores will refresh shortly`)
+    } finally {
+      setDiagnosticsRunning(null)
+      setTimeout(() => setShowToast(null), 6000)
+    }
+  }
+
   return (
     <>
       <style>{`
@@ -1690,7 +1731,17 @@ export default function Dashboard() {
                 <div className="head-actions">
                   <button className="btn btn-ghost" onClick={() => { setShowToast('Filters cleared'); setTimeout(() => setShowToast(null), 3000) }}><Icon.SlidersH /> Filters</button>
                   <button className="btn btn-ghost" onClick={() => { setShowToast('Viewing June data'); setTimeout(() => setShowToast(null), 3000) }}><Icon.CalendarDays /> This Month</button>
-                  <button className="btn btn-pink" onClick={() => { setShowToast('Momentum scan initiated across 11 accounts'); setTimeout(() => setShowToast(null), 3000) }}><Icon.Play /> Run Momentum</button>
+                  <button
+                    className="btn btn-pink"
+                    disabled={momentumRunning}
+                    style={{ opacity: momentumRunning ? 0.65 : 1, cursor: momentumRunning ? 'not-allowed' : 'pointer' }}
+                    onClick={runMomentum}
+                  >
+                    {momentumRunning
+                      ? <><span style={{ display:'inline-block', width:10, height:10, border:'2px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite', marginRight:6 }}/> Running…</>
+                      : <><Icon.Play /> Run Momentum</>
+                    }
+                  </button>
                 </div>
               </div>
 
@@ -2713,11 +2764,21 @@ export default function Dashboard() {
                         }}>
                           {client.status === 'Stalling' ? <><Icon.Zap /> Open Stall Dashboard</> : <><Icon.Mail /> {showComposeFor === client.name ? 'Close Compose' : 'Compose Outreach'}</>}
                         </button>
-                        <button className="btn btn-ghost" onClick={() => {
-                          setShowComposeFor(null)
-                          setShowDiagnosticsFor(showDiagnosticsFor === client.name ? null : client.name)
-                        }}>
-                          {showDiagnosticsFor === client.name ? 'Close Diagnostics' : 'Run Diagnostics'}
+                        <button
+                          className="btn btn-ghost"
+                          disabled={diagnosticsRunning === client.name}
+                          style={{ opacity: diagnosticsRunning === client.name ? 0.65 : 1, cursor: diagnosticsRunning === client.name ? 'not-allowed' : 'pointer' }}
+                          onClick={() => {
+                            if (showDiagnosticsFor === client.name) { setShowDiagnosticsFor(null); return }
+                            setShowComposeFor(null)
+                            setShowDiagnosticsFor(client.name)
+                            void runClientAnalysis(client.name, client.client_id)
+                          }}
+                        >
+                          {diagnosticsRunning === client.name
+                            ? <><span style={{ display:'inline-block', width:10, height:10, border:'2px solid rgba(255,255,255,0.3)', borderTopColor:'var(--text-2)', borderRadius:'50%', animation:'spin 0.7s linear infinite', marginRight:6 }}/> Analysing…</>
+                            : showDiagnosticsFor === client.name ? 'Close Diagnostics' : 'Run Diagnostics'
+                          }
                         </button>
                       </div>
 
