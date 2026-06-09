@@ -31,6 +31,7 @@ const Icon = {
   Send:          () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
   Zap:           () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
   ArrowUpRight:  () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>,
+  Save:          () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
 }
 
 const CLIENTS_DATA = [
@@ -53,6 +54,12 @@ const MOCK_MAILS = [
   { client: 'Halcyon Systems', sender: 'Greg House', subject: 'Urgent: Project timeline delay update', excerpt: 'Urgent: Project timeline delay update' }
 ]
 
+const MOCK_CALENDAR_EVENTS = [
+  { id: 'cal-1', title: 'Q2 Strategy Review — Pinnacle Group', client: 'Pinnacle Group', start: 'Today, 2:00 PM', end: '3:30 PM', platform: 'Zoom', color: 'var(--pink)', prep: 'AG-05' },
+  { id: 'cal-2', title: 'Tech Audit Kickoff — Meridian Capital', client: 'Meridian Capital', start: 'Tomorrow, 10:00 AM', end: '11:00 AM', platform: 'Teams', color: 'var(--indigo)', prep: null },
+  { id: 'cal-3', title: 'Executive Sync — Halcyon Systems', client: 'Halcyon Systems', start: 'Jun 11, 3:00 PM', end: '4:00 PM', platform: 'Google Meet', color: 'var(--red)', prep: 'AG-12' },
+]
+
 const MOCK_FLOW_ACTIONS = [
   { agent: 'AG-03 Stall Detection Agent', color: 'var(--pink-hi)', body: 'Analyzing Gmail communications for Halcyon Systems... flagged phrase: "push milestones to next month"', time: '10 minutes ago', dotColor: 'var(--red)' },
   { agent: 'AG-06 AI Displacement Scanner', color: 'var(--indigo)', body: 'Scanning tech deliverables for Apex Dynamics... evaluated 4 tasks with >80% displacement potential. Playbook recommended.', time: '32 minutes ago', dotColor: 'var(--indigo)' },
@@ -73,6 +80,41 @@ const AGENTS_DATA = [
   { id: 'AG-11', name: 'Pattern Library Engine', status: 'Idle', lastAction: 'Saved Executive Bridge sequence metrics', queries: 'Benchmarks engagement metrics pre- and post-pattern application' },
   { id: 'AG-12', name: 'Outreach Draft Generator', status: 'Idle', lastAction: 'Drafted email response for Halcyon Systems', queries: 'Generates context-aware, non-pushy follow-up drafts' }
 ]
+
+const STALL_DEMO: Record<string, { stall_score: number; exec_cadence_label: string; budget_deviation: number; score_delta: number; exec_dark_days: number }> = {
+  'Halcyon Systems':   { stall_score: 9.1, exec_cadence_label: 'Dark 49d',  budget_deviation: -22, score_delta: -3.2, exec_dark_days: 49 },
+  'Drift Capital':     { stall_score: 7.8, exec_cadence_label: 'Evasive',   budget_deviation: -40, score_delta: -2.8, exec_dark_days: 6  },
+  'Vantage Partners':  { stall_score: 5.4, exec_cadence_label: 'Slowing',   budget_deviation: -8,  score_delta: -0.9, exec_dark_days: 12 },
+  'Corestone Infra':   { stall_score: 3.6, exec_cadence_label: 'Dark 28d',  budget_deviation: -3,  score_delta: -2.1, exec_dark_days: 28 },
+  'Redwood Advisors':  { stall_score: 3.1, exec_cadence_label: 'Slowing',   budget_deviation: -5,  score_delta: -0.8, exec_dark_days: 5  },
+  'Lumis Group':       { stall_score: 2.1, exec_cadence_label: 'Active',    budget_deviation: 1,   score_delta: 0.0,  exec_dark_days: 2  },
+  'Stratford & Co':    { stall_score: 1.8, exec_cadence_label: 'Active',    budget_deviation: 2,   score_delta: 0.1,  exec_dark_days: 1  },
+  'Apex Dynamics':     { stall_score: 1.2, exec_cadence_label: 'Active',    budget_deviation: 3,   score_delta: 0.3,  exec_dark_days: 0  },
+  'NovaTech Solutions':{ stall_score: 1.0, exec_cadence_label: 'Active',    budget_deviation: 4,   score_delta: 0.2,  exec_dark_days: 1  },
+  'Meridian Capital':  { stall_score: 1.4, exec_cadence_label: 'Active',    budget_deviation: 2,   score_delta: 0.4,  exec_dark_days: 2  },
+  'Pinnacle Group':    { stall_score: 0.8, exec_cadence_label: 'Active',    budget_deviation: 5,   score_delta: 1.1,  exec_dark_days: 0  },
+}
+
+const COMP_THREATS_DEMO = [
+  { client_id: 'hcs-001', client: 'Halcyon Systems',  ticker: 'HCS', competitor: 'Accenture',  threat_type: 'RFP Bid',         severity: 'Critical', signal_source: 'RFP language in email thread',  defense_play: 'Exec Alignment Lock',    status: 'Queued',     days_detected: 3  },
+  { client_id: 'png-001', client: 'Pinnacle Group',   ticker: 'PNG', competitor: 'McKinsey',   threat_type: 'Talent Poaching', severity: 'High',     signal_source: '2 VP defections (LinkedIn)',    defense_play: 'Stakeholder Anchor',     status: 'Queued',     days_detected: 7  },
+  { client_id: 'drc-001', client: 'Drift Capital',    ticker: 'DRC', competitor: 'Deloitte',   threat_type: 'Shadow Proposal', severity: 'Medium',   signal_source: 'Email tone shift detected',     defense_play: 'Value Chain Shift',      status: 'Monitoring', days_detected: 12 },
+  { client_id: 'vtg-001', client: 'Vantage Partners', ticker: 'VTG', competitor: 'BCG',        threat_type: 'Budget Window',   severity: 'Low',      signal_source: 'Q3 budget cycle open',          defense_play: 'Pre-emptive Scope Lock', status: 'Monitoring', days_detected: 2  },
+]
+
+const AI_DISP_DEMO: Record<string, { displacement_pct: number; rev_k: number }> = {
+  'Halcyon Systems':    { displacement_pct: 82, rev_k: 210 },
+  'Corestone Infra':    { displacement_pct: 78, rev_k: 55  },
+  'Drift Capital':      { displacement_pct: 74, rev_k: 88  },
+  'Redwood Advisors':   { displacement_pct: 65, rev_k: 45  },
+  'Apex Dynamics':      { displacement_pct: 58, rev_k: 92  },
+  'Vantage Partners':   { displacement_pct: 48, rev_k: 67  },
+  'Lumis Group':        { displacement_pct: 42, rev_k: 51  },
+  'NovaTech Solutions': { displacement_pct: 38, rev_k: 78  },
+  'Stratford & Co':     { displacement_pct: 35, rev_k: 62  },
+  'Meridian Capital':   { displacement_pct: 22, rev_k: 98  },
+  'Pinnacle Group':     { displacement_pct: 18, rev_k: 145 },
+}
 
 const PATTERNS_DATA = [
   {
@@ -308,6 +350,42 @@ const ENGAGEMENTS_DATA = [
     summary: 'Execution phase showing scope creep and sprint slippage. Budget cycle opens Jul 1 — service expansion proposal identified by AG-08. Margin compression risk.',
     alert: 'Undocumented scope +22 hrs · 2 sprint features delayed',
   },
+  {
+    client: 'Drift Capital', ticker: 'DRC', project: 'Regulatory Compliance Overhaul',
+    phaseNum: 2, phase: 'Remediation', totalPhases: 4,
+    progress: 55, score: 1.70, scoreDelta: -1.1, health: 'Stalling',
+    trend: [70, 68, 65, 62, 60, 58, 56, 55],
+    daysActive: 95, daysSinceContact: 6, revenue: 88,
+    milestones: ['Scoping', 'Remediation', 'Filing', 'Closure'],
+    log: [
+      { date: '06/03', type: 'risk',    event: 'Second missed delivery date — no client response' },
+      { date: '05/28', type: 'change',  event: 'Scope creep +40% with no billing change order' },
+      { date: '05/20', type: 'meeting', event: 'Last exec contact — Thomas Vance (Partner)' },
+    ],
+    summary: 'Missed 2 major delivery dates. Scope creep +40% with no corresponding billing change order. Revenue at risk — immediate escalation required.',
+    alert: 'Billing −40% vs contract · 2 missed delivery dates',
+  },
+]
+
+type ActionItem = {
+  id: string
+  client_id: string | null
+  client_name: string
+  description: string
+  source_agent: string
+  urgency: string
+  due_date: string | null
+  owner: string
+  completed: boolean
+  completed_at: string | null
+  created_at: string
+}
+
+const STATIC_ACTION_ITEMS: ActionItem[] = [
+  { id: 'act-1', client_id: 'hcs-001', client_name: 'Halcyon Systems', description: 'Stall score 9.1 — 3 missed milestones, exec dark 7 wks. Immediate escalation required.', source_agent: 'stall_detection', urgency: 'crit', due_date: '2026-06-09', owner: 'Partner lead', completed: false, completed_at: null, created_at: '' },
+  { id: 'act-2', client_id: 'drc-001', client_name: 'Drift Capital',    description: 'Billing −40% vs contract. Scope creep with no change order — revenue at risk.',           source_agent: 'stall_detection', urgency: 'crit', due_date: '2026-06-08', owner: 'Account mgr', completed: false, completed_at: null, created_at: '' },
+  { id: 'act-3', client_id: 'vtg-001', client_name: 'Vantage Partners', description: 'Budget cycle opens Jul 1. Value chain proposal window — 3 service expansions identified.',   source_agent: 'value_chain',     urgency: 'high', due_date: '2026-06-20', owner: 'Principal',   completed: false, completed_at: null, created_at: '' },
+  { id: 'act-4', client_id: 'cor-001', client_name: 'Corestone Infra',  description: 'No exec contact in 28 days. Relationship health score dropped 2.1 pts. Re-engage now.',    source_agent: 'relationship',    urgency: 'high', due_date: '2026-06-12', owner: 'Director',    completed: false, completed_at: null, created_at: '' },
 ]
 
 // Node geometry: regular nw=145 nh=58 (half: 72/29), main nw=165 nh=68 (half: 82/34)
@@ -381,17 +459,23 @@ export default function Dashboard() {
   const [selectedPattern, setSelectedPattern] = useState('Account War Book')
   const [patternFilter, setPatternFilter] = useState('All')
   const [completedActions, setCompletedActions] = useState<string[]>([])
+  const [actionItems, setActionItems] = useState<ActionItem[]>(STATIC_ACTION_ITEMS)
   const [searchQuery, setSearchQuery] = useState('')
   const [emailDraftBody, setEmailDraftBody] = useState('Hi Greg,\n\nI noticed we postponed the steering committee review. To ensure we maintain project momentum and don\'t slide back from key milestones, I suggest we schedule a quick 10-minute alignment sync next week.\n\nLet me know your thoughts.\n\nBest,\nDemo Team')
   const [isSendingEmail, setIsSendingEmail] = useState(false)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [showMoreMenu, setShowMoreMenu] = useState(false)
   
   // New States
   const [showDiagnosticsFor, setShowDiagnosticsFor] = useState<string | null>(null)
   const [expandedEngagement, setExpandedEngagement] = useState<string | null>(null)
   const [homeSubTab, setHomeSubTab] = useState('mails')
   const [notesText, setNotesText] = useState('')
+  const [savedNotes, setSavedNotes] = useState<{id:string;content:string;updated_at:string}[]>([])
+  const [activeNoteId, setActiveNoteId] = useState<string|null>(null)
+  const [notesSaving, setNotesSaving] = useState(false)
+  const [notesSavedAt, setNotesSavedAt] = useState<Date|null>(null)
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
   const [devConsoleOpen, setDevConsoleOpen] = useState(false)
   const [consoleTab, setConsoleTab] = useState<'terminal'|'chat'|'connections'>('terminal')
@@ -406,6 +490,9 @@ export default function Dashboard() {
   ])
   const [adkChatInput, setAdkChatInput] = useState('')
   const [adkRunning, setAdkRunning] = useState(false)
+  const adkStartTimeRef = useRef<number | null>(null)
+  const [adkChatLoading, setAdkChatLoading] = useState(false)
+  const [adkChatSessionId] = useState(() => `adkchat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
   const termScrollRef = useRef<HTMLDivElement>(null)
   const chatScrollRef = useRef<HTMLDivElement>(null)
   const [hoveredMomentumPt, setHoveredMomentumPt] = useState<number | null>(null)
@@ -414,18 +501,208 @@ export default function Dashboard() {
   const [mapPeriodFilter, setMapPeriodFilter] = useState('All Time')
   const [mapHeadcountFilter, setMapHeadcountFilter] = useState('All')
   const [portfolioChat, setPortfolioChat] = useState<{role:'user'|'ai';text:string;ts:string}[]>([
-    { role: 'ai', text: 'Portfolio Intelligence AI ready. Ask me about client positioning relative to the project wall, momentum trajectories, or strategic partnership potential.', ts: '07:31' },
+    { role: 'ai', text: 'Portfolio Intelligence AI ready. Ask me about client positioning, momentum trajectories, AI displacement risk, or expansion opportunities.', ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) },
   ])
   const [portfolioChatInput, setPortfolioChatInput] = useState('')
+  const [portfolioChatLoading, setPortfolioChatLoading] = useState(false)
+  const [portfolioChatSessionId] = useState(() => `pchat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
   const portfolioChatRef = useRef<HTMLDivElement>(null)
+  const [deployingPattern, setDeployingPattern] = useState<string | null>(null)
+  const [patternDeploySessionId] = useState(() => `pdeploy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
   const [mapHoveredClient, setMapHoveredClient] = useState<string | null>(null)
-  const [queueEvents, setQueueEvents] = useState<{id:string;agent_id:string;payload:Record<string,unknown>;created_at:string}[]>([])
+  const [queueEvents, setQueueEvents] = useState<{id:string;agent_id:string;event_type:string;payload:Record<string,unknown>;created_at:string}[]>([])
+
+  // Live data from Supabase (agents write here after each run)
+  type ClientRow = typeof CLIENTS_DATA[number] & { client_id?: string; ticker?: string; stall_score?: number; exec_dark_days?: number; exec_cadence_label?: string; budget_deviation?: number; alert_text?: string; score_delta?: number; relationship_score?: number; goal_alignment_score?: number; displacement_pct?: number }
+  type AgentRow  = typeof AGENTS_DATA[number] & { updatedAt?: string }
+  type EngRow    = typeof ENGAGEMENTS_DATA[number]
+  const [clients,          setClients]          = useState<ClientRow[]>(CLIENTS_DATA as ClientRow[])
+  const [agentsData,       setAgentsData]       = useState<AgentRow[]>(AGENTS_DATA)
+  const [engagementsData,  setEngagementsData]  = useState<EngRow[]>(ENGAGEMENTS_DATA)
+  const [mails,            setMails]            = useState(MOCK_MAILS)
+  const [calendarEvents,   setCalendarEvents]   = useState(MOCK_CALENDAR_EVENTS)
+  const [quickUpdateText,  setQuickUpdateText]  = useState('')
+  const [quickUpdateSending, setQuickUpdateSending] = useState(false)
+  const [showComposeFor,   setShowComposeFor]   = useState<string|null>(null)
+  const [composeSubject,   setComposeSubject]   = useState('')
+  const [clientMomentum,   setClientMomentum]   = useState<Record<string,{score:number;recorded_at:string}[]>>({})
+  const [competitiveThreats, setCompetitiveThreats] = useState<{client_id:string;client:string;ticker:string;competitor:string;threat_type:string;severity:string;signal_source:string;defense_play:string;status:string;days_detected:number}[]>([])
+
+  // Fetch all live data from Supabase
+  useEffect(() => {
+    const load = async () => {
+      // Clients + scores (joined client-side)
+      const [{ data: cRaw }, { data: sRaw }] = await Promise.all([
+        supabase.from('clients').select('*'),
+        supabase.from('client_scores').select('*'),
+      ])
+      let merged: ClientRow[] = []
+      if (cRaw?.length) {
+        const sMap = Object.fromEntries((sRaw ?? []).map((s: Record<string,unknown>) => [s.client_id as string, s]))
+        const order = ['Stalling','At Risk','Progressing','On Track','Accelerating']
+        merged = cRaw.map((c: Record<string,unknown>) => {
+          const s = (sMap[c.client_id as string] ?? {}) as Record<string,unknown>
+          return {
+            client_id:           c.client_id as string,
+            name:                c.name as string,
+            score:               s.composite_score != null ? Number(s.composite_score).toFixed(2) : null as unknown as string,
+            status:              (s.status as string) ?? null,
+            tag:                 c.industry as string,
+            contact:             c.contact_name as string,
+            email:               c.contact_email as string,
+            lastActive:          s.updated_at ? new Date(s.updated_at as string).toLocaleDateString() : '—',
+            notes:               (s.agent_notes as string) ?? '',
+            ticker:              c.ticker as string,
+            stall_score:         s.stall_score as number,
+            exec_dark_days:      s.exec_dark_days as number,
+            exec_cadence_label:  s.exec_cadence_label as string,
+            budget_deviation:    s.budget_deviation_pct as number,
+            alert_text:          s.alert_text as string,
+            score_delta:         s.score_delta as number,
+            relationship_score:  s.relationship_score as number,
+            goal_alignment_score:s.goal_alignment_score as number,
+            displacement_pct:    s.displacement_pct as number,
+          }
+        })
+        merged.sort((a, b) => order.indexOf(a.status ?? '') - order.indexOf(b.status ?? ''))
+        setClients(merged)
+      }
+
+      // Agent status — overlay live status/lastAction; fall back to rich static descriptions when not yet run
+      const { data: aRaw } = await supabase.from('agent_status').select('*').order('agent_id')
+      if (aRaw?.length) {
+        setAgentsData(aRaw.map((a: Record<string,unknown>) => {
+          const base = AGENTS_DATA.find(x => x.id === (a.agent_id as string)) ?? AGENTS_DATA[0]
+          const liveAction = a.last_action as string
+          const isPlaceholder = !liveAction || liveAction === 'Awaiting first run'
+          return {
+            ...base,
+            id:         a.agent_id as string,
+            name:       (a.name as string) || base.name,
+            status:     (a.status as string) || base.status,
+            lastAction: isPlaceholder ? base.lastAction : liveAction,
+            updatedAt:  a.updated_at as string,
+          }
+        }))
+      }
+
+      // Engagements — overlay live Supabase fields onto static shape (keeps phase/milestone/log)
+      const { data: eRaw } = await supabase.from('engagements').select('*')
+      if (eRaw?.length) {
+        const eMap = Object.fromEntries(eRaw.map((e: Record<string,unknown>) => [e.client_name as string, e]))
+        const now = Date.now()
+        setEngagementsData(ENGAGEMENTS_DATA.map(e => {
+          const live = (eMap[e.client] ?? {}) as Record<string,unknown>
+          const updatedAt = live.updated_at ? new Date(live.updated_at as string).getTime() : null
+          const daysSinceContact = updatedAt ? Math.floor((now - updatedAt) / 86_400_000) : e.daysSinceContact
+          return {
+            ...e,
+            project:          (live.project_name as string) ?? e.project,
+            health:           (live.health        as string) ?? e.health,
+            score:            (live.score         as number) ?? e.score,
+            scoreDelta:       (live.score_delta   as number) ?? e.scoreDelta,
+            alert:            (live.alert         as string) ?? e.alert,
+            summary:          (live.summary       as string) ?? e.summary,
+            progress:         (live.progress_pct  as number) ?? e.progress,
+            daysSinceContact,
+          }
+        }))
+      }
+
+      // Action items — load live and seed completed state
+      const { data: aiRaw } = await supabase.from('action_items').select('*').order('created_at', { ascending: false }).limit(50)
+      if (aiRaw?.length) {
+        const clientNameById = Object.fromEntries(merged.map(c => [c.client_id, c.name]))
+        const loaded: ActionItem[] = aiRaw.map((a: Record<string,unknown>) => ({
+          id:           a.id as string,
+          client_id:    (a.client_id as string) ?? null,
+          client_name:  clientNameById[a.client_id as string] ?? (a.client_id as string) ?? '—',
+          description:  a.description as string,
+          source_agent: (a.source_agent as string) ?? '',
+          urgency:      (a.urgency as string) ?? 'medium',
+          due_date:     (a.due_date as string) ?? null,
+          owner:        (a.owner as string) ?? '',
+          completed:    (a.completed as boolean) ?? false,
+          completed_at: (a.completed_at as string) ?? null,
+          created_at:   (a.created_at as string) ?? '',
+        }))
+        setActionItems(loaded)
+        setCompletedActions(loaded.filter(a => a.completed).map(a => a.id))
+      }
+
+      // Gmail threads → Mails tab
+      const { data: mRaw } = await supabase.from('gmail_threads').select('*, clients(name)').order('received_at', { ascending: false }).limit(20)
+      if (mRaw?.length) {
+        setMails(mRaw.map((m: Record<string,unknown>) => ({
+          client:  (m.clients as Record<string,string>)?.name ?? (m.client_id as string) ?? '',
+          sender:  m.sender as string,
+          subject: m.subject as string,
+          excerpt: (m.preview as string) ?? (m.subject as string),
+        })))
+      }
+
+      // Calendar events — fetch user's + global demo events (user_id is null)
+      const { data: calRaw } = await supabase.from('calendar_events').select('*, clients(name)').or('user_id.is.null,user_id.eq.' + (await supabase.auth.getUser()).data.user?.id).order('start_time', { ascending: true }).limit(10)
+      if (calRaw?.length) {
+        setCalendarEvents(calRaw.map((e: Record<string,unknown>) => ({
+          id:       e.event_id as string ?? e.id as string,
+          title:    e.title as string,
+          client:   (e.clients as Record<string,string>)?.name ?? (e.client_id as string) ?? '',
+          start:    new Date(e.start_time as string).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }),
+          end:      new Date(e.end_time as string).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          platform: (e.platform as string) ?? 'Meet',
+          color:    'var(--indigo)',
+          prep:     (e.prep_agent as string) ?? null,
+        })))
+      }
+
+      // Competitive threats
+      const { data: tRaw } = await supabase.from('competitive_threats').select('*, clients(name,ticker)').order('detected_at', { ascending: false })
+      if (tRaw?.length) {
+        setCompetitiveThreats(tRaw.map((t: Record<string,unknown>) => {
+          const cl = (t.clients ?? {}) as Record<string,string>
+          return {
+            client_id:    t.client_id as string,
+            client:       cl.name   ?? t.client_id as string,
+            ticker:       cl.ticker ?? '',
+            competitor:   t.competitor  as string,
+            threat_type:  t.threat_type as string,
+            severity:     t.severity    as string,
+            signal_source:t.signal_source as string,
+            defense_play: t.defense_play as string,
+            status:       t.status      as string,
+            days_detected:t.days_detected as number ?? 0,
+          }
+        }))
+      }
+    }
+
+    load()
+
+    // Realtime: agent_status updates live as agents run
+    const agentCh = supabase.channel('realtime:agent_status')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'agent_status' }, (payload) => {
+        const a = payload.new as Record<string,unknown>
+        setAgentsData(prev => prev.map(x =>
+          x.id === a.agent_id ? { ...x, status: a.status as string, lastAction: a.last_action as string } : x
+        ))
+      })
+      .subscribe()
+
+    // Realtime: client_scores — refresh client list when any score updates
+    const scoreCh = supabase.channel('realtime:client_scores')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'client_scores' }, () => { load() })
+      .subscribe()
+
+    return () => { supabase.removeChannel(agentCh); supabase.removeChannel(scoreCh) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Supabase Realtime — dashboard_queue
   useEffect(() => {
     // Fetch last 20 rows on mount
     supabase.from('dashboard_queue')
-      .select('id, agent_id, payload, created_at')
+      .select('id, agent_id, event_type, payload, created_at')
       .order('created_at', { ascending: false })
       .limit(20)
       .then(({ data }) => {
@@ -438,7 +715,7 @@ export default function Dashboard() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'dashboard_queue' },
         (payload) => {
-          const row = payload.new as {id:string;agent_id:string;payload:Record<string,unknown>;created_at:string}
+          const row = payload.new as {id:string;agent_id:string;event_type:string;payload:Record<string,unknown>;created_at:string}
           setQueueEvents(prev => [row, ...prev].slice(0, 50))
           const msg = typeof row.payload?.message === 'string' ? row.payload.message : JSON.stringify(row.payload)
           const ts = new Date(row.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -448,7 +725,32 @@ export default function Dashboard() {
       )
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    // Subscribe to new action_items inserts (agents writing new items)
+    const aiChannel = supabase.channel('realtime:action_items')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'action_items' },
+        (payload) => {
+          const row = payload.new as Record<string,unknown>
+          const newItem: ActionItem = {
+            id:           row.id as string,
+            client_id:    (row.client_id as string) ?? null,
+            client_name:  (row.client_id as string) ?? '—',
+            description:  row.description as string,
+            source_agent: (row.source_agent as string) ?? '',
+            urgency:      (row.urgency as string) ?? 'medium',
+            due_date:     (row.due_date as string) ?? null,
+            owner:        (row.owner as string) ?? '',
+            completed:    false,
+            completed_at: null,
+            created_at:   (row.created_at as string) ?? '',
+          }
+          setActionItems(prev => [newItem, ...prev])
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel); supabase.removeChannel(aiChannel) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -478,6 +780,94 @@ export default function Dashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Load all meeting notes on mount
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase.from('meeting_notes')
+        .select('id, content, updated_at')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .then(({ data }) => {
+          if (data?.length) {
+            setSavedNotes(data)
+            setNotesText(data[0].content ?? '')
+            setActiveNoteId(data[0].id)
+          }
+        })
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Debounced auto-save when text changes
+  useEffect(() => {
+    if (!notesText) return
+    const timer = setTimeout(() => { saveNote(false) }, 2000)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notesText])
+
+  // Fetch momentum_history when diagnostics panel is opened for a client
+  useEffect(() => {
+    if (!showDiagnosticsFor) return
+    const client = clients.find(c => c.name === showDiagnosticsFor)
+    if (!client?.client_id || clientMomentum[client.client_id]) return
+    supabase.from('momentum_history')
+      .select('score, recorded_at')
+      .eq('client_id', client.client_id)
+      .order('recorded_at', { ascending: true })
+      .then(({ data }) => {
+        if (data?.length && client.client_id) {
+          setClientMomentum(prev => ({ ...prev, [client.client_id!]: data }))
+        }
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDiagnosticsFor])
+
+  // Close flyout menus on outside click
+  useEffect(() => {
+    if (!showNotifications && !showMoreMenu) return
+    const handler = (e: MouseEvent) => {
+      const t = e.target as HTMLElement
+      if (!t.closest('.icon-btn')) {
+        setShowNotifications(false)
+        setShowMoreMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showNotifications, showMoreMenu])
+
+  async function saveNote(showSaving = true) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !notesText.trim()) return
+    if (showSaving) setNotesSaving(true)
+    const id = activeNoteId ?? crypto.randomUUID()
+    const now = new Date().toISOString()
+    await supabase.from('meeting_notes').upsert({ id, user_id: user.id, content: notesText, updated_at: now }, { onConflict: 'id' })
+    setActiveNoteId(id)
+    setNotesSavedAt(new Date())
+    setSavedNotes(prev => {
+      const without = prev.filter(n => n.id !== id)
+      return [{ id, content: notesText, updated_at: now }, ...without]
+    })
+    if (showSaving) setNotesSaving(false)
+  }
+
+  async function toggleActionItem(id: string, newCompleted: boolean) {
+    const now = new Date().toISOString()
+    setActionItems(prev => prev.map(a => a.id === id ? { ...a, completed: newCompleted, completed_at: newCompleted ? now : null } : a))
+    if (newCompleted) {
+      setCompletedActions(prev => [...prev.filter(x => x !== id), id])
+    } else {
+      setCompletedActions(prev => prev.filter(x => x !== id))
+    }
+    const { data: { user } } = await supabase.auth.getUser()
+    const patch: Record<string, unknown> = { completed: newCompleted, completed_at: newCompleted ? now : null }
+    if (user) patch.user_id = user.id
+    await supabase.from('action_items').update(patch).eq('id', id)
+  }
+
   async function signOut() {
     await supabase.auth.signOut()
     router.push('/')
@@ -493,161 +883,308 @@ export default function Dashboard() {
     const e = (t:string) => results.push({ type:'err',  text: t })
     const h = (t:string) => results.push({ type:'info', text: t })
 
+    // Agent layer lookup
+    const agentLayer = (id: string) => {
+      if (['AG-10','AG-08','AG-02'].includes(id)) return 'Data Source'
+      if (['AG-03','AG-01','AG-07','AG-05'].includes(id)) return 'Specialist'
+      if (['AG-06','AG-04','AG-11'].includes(id)) return 'Orchestrator'
+      if (['AG-09','AG-12'].includes(id)) return 'Action'
+      return 'Unknown'
+    }
+    const fmtTs = (iso?: string) => iso
+      ? new Date(iso).toLocaleString('en-GB', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }).replace(',', ' ·')
+      : 'no record'
+    const fmtUptime = (startMs: number) => {
+      const s = Math.floor((Date.now() - startMs) / 1000)
+      const m = Math.floor(s / 60), sec = s % 60
+      return m > 0 ? `${m}m ${sec}s` : `${sec}s`
+    }
+
     if (base === 'help') {
       h('Available commands:')
       ;[
-        ['agent list',             'list all 12 agents with live status'],
-        ['agent inspect <id>',     'show agent config, model, and I/O schema'],
-        ['agent io <id>',          'show last run input/output and token usage'],
+        ['agent list',             'list all agents with live status'],
+        ['agent inspect <id>',     'show agent config, layer, last action, and timestamp'],
+        ['agent io <id>',          'show last run details'],
         ['agent run <id>',         'manually trigger an agent run'],
         ['schema list',            'list all Supabase and MongoDB schemas'],
         ['schema show <name>',     'print schema definition'],
         ['env show',               'print environment config (keys masked)'],
         ['supabase ping',          'test Supabase connection'],
-        ['supabase tables',        'list all tables with row counts'],
+        ['supabase tables',        'list tables with live row counts'],
         ['mongo ping',             'test MongoDB Atlas connection'],
         ['mongo collections',      'list collections with document counts'],
-        ['mongo find <col>',       'sample 5 documents from a collection'],
+        ['mongo find <col>',       'sample documents from a collection'],
         ['adk start',              'start the Gemini ADK orchestration server'],
         ['adk stop',               'stop the ADK server'],
         ['adk status',             'show server status and uptime'],
-        ['adk logs',               'tail the 10 most recent agent log entries'],
+        ['adk logs',               'tail recent agent log entries'],
         ['clear',                  'clear terminal output'],
       ].forEach(([cmd, desc]) => o(`  ${cmd.padEnd(28)} — ${desc}`))
+
     } else if (base === 'clear') {
       return [{ type: 'info', text: '__CLEAR__' }]
+
     } else if (base === 'agent') {
       if (sub === 'list') {
-        h('─── 12 Registered Agents ───')
-        AGENTS_DATA.forEach(a => {
+        const alerting  = agentsData.filter(a => a.status === 'Alerting').length
+        const analyzing = agentsData.filter(a => a.status === 'Analyzing').length
+        const idle      = agentsData.filter(a => a.status === 'Idle').length
+        h(`─── ${agentsData.length} Registered Agents  [${alerting} alerting · ${analyzing} analyzing · ${idle} idle] ───`)
+        agentsData.forEach(a => {
           const dot = a.status === 'Alerting' ? '●' : a.status === 'Analyzing' ? '◐' : '○'
-          const col = a.status === 'Alerting' ? '[red]' : a.status === 'Analyzing' ? '[amber]' : '[green]'
-          o(`  ${dot} ${a.id}  ${a.status.padEnd(12)}  ${a.name}`)
+          const ts  = fmtTs((a as {updatedAt?:string}).updatedAt)
+          o(`  ${dot} ${a.id.padEnd(6)} ${a.status.padEnd(12)} ${agentLayer(a.id).padEnd(14)} ${a.name}  · last: ${ts}`)
         })
       } else if (sub === 'inspect') {
-        const ag = AGENTS_DATA.find(a => a.id === (arg || '').toUpperCase())
+        const ag = agentsData.find(a => a.id === (arg || '').toUpperCase())
         if (!ag) { e(`Agent '${arg}' not found. Run 'agent list'.`); return results }
+        const ts = fmtTs((ag as {updatedAt?:string}).updatedAt)
         h(`─── ${ag.id} · ${ag.name} ───`)
         o(`  Status:       ${ag.status}`)
-        o(`  Model:        gemini-2.0-flash-exp`)
+        o(`  Layer:        ${agentLayer(ag.id)}`)
+        o(`  Model:        gemini-2.5-flash`)
         o(`  Trigger:      scheduled (15 min) + event-driven`)
         o(`  Input scope:  ${ag.queries}`)
         o(`  Last action:  ${ag.lastAction}`)
-        o(`  Output sink:  Supabase dashboard_queue + MongoDB agent_runs`)
-        o(`  Max tokens:   4,096 output · 32k context`)
+        o(`  Last run:     ${ts}`)
+        o(`  Output sink:  Supabase agent_status + MongoDB agent_runs`)
+        o(`  Max tokens:   8,192 output · 1M context`)
       } else if (sub === 'io') {
-        const ag = AGENTS_DATA.find(a => a.id === (arg || '').toUpperCase())
+        const ag = agentsData.find(a => a.id === (arg || '').toUpperCase())
         if (!ag) { e(`Agent '${arg}' not found.`); return results }
+        const ts = (ag as {updatedAt?:string}).updatedAt ?? new Date().toISOString()
         h(`─── ${ag.id} Last Run I/O ───`)
-        o(`  INPUT  → { accounts: ["all"], trigger: "scheduled_15min", ts: "2026-06-07T07:31Z" }`)
-        o(`  OUTPUT → { flagged: 2, updated: 5, alerts_raised: 1, run_id: "run_${Math.random().toString(36).slice(2,10)}" }`)
+        o(`  INPUT  → { accounts: ["all"], trigger: "scheduled_15min", ts: "${ts}" }`)
         o(`  STATUS → ${ag.status}`)
         o(`  LOG    → "${ag.lastAction}"`)
-        o(`  TOKENS → 1,842 in / 312 out · latency 1.4s`)
+        o(`  RUN_AT → ${fmtTs(ts)}`)
+        // Token counts are not in the live state — show placeholder
+        o(`  TOKENS → n/a (check ADK server logs for token usage)`)
       } else if (sub === 'run') {
-        const ag = AGENTS_DATA.find(a => a.id === (arg || '').toUpperCase())
+        const ag = agentsData.find(a => a.id === (arg || '').toUpperCase())
         if (!ag) { e(`Agent '${arg}' not found.`); return results }
-        h(`Triggering ${ag.id} manually…`)
-        o(`  ✓ Queued  run_id: run_${Math.random().toString(36).slice(2,10)}`)
-        o(`  ✓ Est. completion ~8s · poll with: agent io ${ag.id}`)
+        const runId = `run_${Math.random().toString(36).slice(2,10)}`
+        // Optimistically flip agent to Analyzing in live state
+        setAgentsData(prev => prev.map(a =>
+          a.id === ag.id
+            ? { ...a, status: 'Analyzing', lastAction: `Manual trigger via console (${runId})`, updatedAt: new Date().toISOString() }
+            : a
+        ))
+        h(`Triggering ${ag.id} · ${ag.name}…`)
+        o(`  ✓ Status → Analyzing  (visible in Agent Status panel)`)
+        o(`  ✓ run_id: ${runId}`)
+        o(`  ✓ Poll with: agent io ${ag.id}`)
       } else { e(`Unknown sub-command '${sub}'. Try: list, inspect, io, run`) }
+
     } else if (base === 'schema') {
       if (sub === 'list') {
         h('Supabase tables:')
-        o('  dashboard_queue   { id, agent_id, payload JSONB, status, created_at }')
-        o('  profiles          { id UUID, email, full_name, created_at }')
+        o('  client_scores       { client_id, composite_score, status, stall_score, exec_dark_days, score_delta, displacement_pct, updated_at }')
+        o('  agent_status        { agent_id, name, status, last_action, updated_at }')
+        o('  action_items        { id, client_name, description, urgency, due_date, owner, completed }')
+        o('  engagements         { client_id, project_name, health, score, alert, summary, updated_at }')
+        o('  competitive_threats { client_id, client, ticker, competitor, threat_type, severity, signal_source, defense_play, status, days_detected }')
+        o('  dashboard_queue     { id, agent_id, payload JSONB, status, created_at }')
         h('MongoDB collections:')
-        o('  signals           { account, type, content, severity 1-10, agent_id, ts }')
-        o('  cadence           { account, last_contact, exec_dark_days, rel_score }')
-        o('  commitments       { account, description, due_date, status }')
-        o('  agent_runs        { agent_id, run_id, input, output, tokens, latency_ms, ts }')
+        o('  signals             { account, type, content, severity 1-10, agent_id, ts }')
+        o('  cadence             { account, last_contact, exec_dark_days, rel_score }')
+        o('  commitments         { account, description, due_date, status }')
+        o('  pattern_library     { pattern_name, category, status, trigger, armed_at }')
+        o('  agent_runs          { agent_id, run_id, input, output, tokens, latency_ms, ts }')
       } else if (sub === 'show') {
         const defs: Record<string, string[]> = {
-          'dashboard_queue': ['  id           UUID PRIMARY KEY DEFAULT gen_random_uuid()','  agent_id     TEXT NOT NULL','  payload      JSONB NOT NULL','  status       TEXT DEFAULT \'pending\'   -- pending | delivered | error','  created_at   TIMESTAMPTZ DEFAULT NOW()'],
-          'signals':         ['  _id          ObjectId','  account      String (required, indexed)','  type         String enum[stall, risk, opportunity, relationship]','  content      String','  severity     Number (1–10)','  agent_id     String','  ts           Date (indexed)'],
-          'agent_runs':      ['  _id          ObjectId','  agent_id     String (indexed)','  run_id       String (unique)','  input        Object','  output       Object','  tokens       { in: Number, out: Number }','  latency_ms   Number','  ts           Date'],
+          'client_scores':      ['  client_id          TEXT PRIMARY KEY','  composite_score    FLOAT','  status             TEXT','  stall_score        FLOAT','  exec_dark_days     INT','  score_delta        FLOAT','  displacement_pct   FLOAT','  updated_at         TIMESTAMPTZ'],
+          'agent_status':       ['  agent_id           TEXT PRIMARY KEY','  name               TEXT','  status             TEXT  -- Idle | Analyzing | Alerting | Active','  last_action        TEXT','  updated_at         TIMESTAMPTZ'],
+          'action_items':       ['  id                 UUID PRIMARY KEY','  client_name        TEXT','  description        TEXT','  urgency            TEXT  -- crit | high | medium','  due_date           DATE','  owner              TEXT','  completed          BOOLEAN DEFAULT false'],
+          'competitive_threats':['  client_id          TEXT','  client             TEXT','  ticker             TEXT','  competitor         TEXT','  threat_type        TEXT','  severity           TEXT  -- Critical | High | Medium | Low','  signal_source      TEXT','  defense_play       TEXT','  status             TEXT  -- Queued | Monitoring | Resolved','  days_detected      INT'],
+          'dashboard_queue':    ['  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid()','  agent_id           TEXT NOT NULL','  payload            JSONB NOT NULL','  status             TEXT DEFAULT \'pending\'','  created_at         TIMESTAMPTZ DEFAULT NOW()'],
+          'signals':            ['  _id                ObjectId','  account            String (indexed)','  type               String enum[stall, risk, opportunity, relationship]','  content            String','  severity           Number (1–10)','  agent_id           String','  ts                 Date (indexed)'],
+          'agent_runs':         ['  _id                ObjectId','  agent_id           String (indexed)','  run_id             String (unique)','  input              Object','  output             Object','  tokens             { in: Number, out: Number }','  latency_ms         Number','  ts                 Date'],
         }
         const def = defs[arg]
         if (!def) { e(`Schema '${arg}' not found. Available: ${Object.keys(defs).join(', ')}`); return results }
         h(`─── ${arg} ───`)
         def.forEach(l => o(l))
       } else { e('Usage: schema list  |  schema show <name>') }
+
     } else if (base === 'env') {
       if (sub === 'show') {
         h('─── Environment Variables ───')
-        o('  NEXT_PUBLIC_SUPABASE_URL        https://xxxxxxxxxxxx.supabase.co')
-        o('  NEXT_PUBLIC_SUPABASE_ANON_KEY   sb_anon_●●●●●●●●●●●●●●●●●●●●')
-        o('  GEMINI_API_KEY                  AIzaSy●●●●●●●●●●●●●●●●●●●●●●')
-        o('  MONGODB_URI                     mongodb+srv://●●●@cluster0.xxxxx.mongodb.net/qnsult_prod')
-        o('  GMAIL_CLIENT_ID                 ●●●●●.apps.googleusercontent.com')
-        o('  GMAIL_CLIENT_SECRET             GOCSPX-●●●●●●●●●●●●●●●●●●●●')
-        o('  ADK_PORT                        8000')
-        o('  NODE_ENV                        development')
+        o(`  NEXT_PUBLIC_SUPABASE_URL        https://sxxrwykfohktsnyscryr.supabase.co`)
+        o(`  NEXT_PUBLIC_SUPABASE_ANON_KEY   sb_anon_●●●●●●●●●●●●●●●●●●●●`)
+        o(`  GOOGLE_CLOUD_PROJECT            qnsult`)
+        o(`  GOOGLE_GENAI_USE_VERTEXAI       true`)
+        o(`  GEMINI_MODEL                    gemini-2.5-flash`)
+        o(`  MONGODB_URI                     mongodb+srv://●●●@cluster0.xxxxx.mongodb.net/qnsult_prod`)
+        o(`  GMAIL_CLIENT_ID                 ●●●●●.apps.googleusercontent.com`)
+        o(`  GMAIL_CLIENT_SECRET             GOCSPX-●●●●●●●●●●●●●●●●●●●●`)
+        o(`  ADK_SERVER_URL                  ${process.env.ADK_SERVER_URL ?? 'http://localhost:8000 (default)'}`)
+        o(`  NODE_ENV                        development`)
         h('  ⚠ Real values stored in .env.local — never committed to git')
       } else { e('Usage: env show') }
+
     } else if (base === 'supabase') {
-      if (sub === 'ping') { h('Pinging Supabase…'); o('  ✓ Connected · 38ms · us-east-1'); o('  ✓ Anon key valid · RLS active on all tables') }
-      else if (sub === 'tables') { h('Supabase tables:'); o('  dashboard_queue   0 rows  — agent output queue'); o('  profiles          1 row   — authenticated users') }
-      else { e('Usage: supabase ping  |  supabase tables') }
+      if (sub === 'ping') {
+        h('Pinging Supabase…')
+        o(`  ✓ Project:    sxxrwykfohktsnyscryr.supabase.co`)
+        o(`  ✓ Region:     us-east-1`)
+        o(`  ✓ RLS:        active on all tables`)
+        o(`  ✓ Realtime:   ${queueEvents.length > 0 ? `${queueEvents.length} events received` : 'subscribed, 0 events yet'}`)
+      } else if (sub === 'tables') {
+        h('Supabase tables (live row counts from dashboard state):')
+        o(`  client_scores        ${String(clients.length).padEnd(4)} rows   — composite scores, stall, exec dark days`)
+        o(`  agent_status         ${String(agentsData.length).padEnd(4)} rows   — 12 agents, status + last action`)
+        o(`  action_items         ${String(actionItems.length).padEnd(4)} rows   — ${actionItems.filter(a=>!a.completed).length} open · ${actionItems.filter(a=>a.completed).length} resolved`)
+        o(`  engagements          ${String(engagementsData.length).padEnd(4)} rows   — active engagement health records`)
+        o(`  competitive_threats  ${String(competitiveThreats.length).padEnd(4)} rows   — ${competitiveThreats.length > 0 ? 'live data' : 'using demo fallback'}`)
+        o(`  dashboard_queue      ${String(queueEvents.length).padEnd(4)} rows   — realtime agent event queue`)
+        h(clients.length > 0 ? '  ✓ Live data loaded' : '  ⚠ Using demo fallback data — run agents to populate')
+      } else { e('Usage: supabase ping  |  supabase tables') }
+
     } else if (base === 'mongo') {
-      if (sub === 'ping') { h('Pinging MongoDB Atlas…'); o('  ✓ Connected · 91ms · cluster0.xxxxx (M0 Sandbox)'); o('  ✓ DB: qnsult_prod · Auth: SCRAM-SHA-256') }
-      else if (sub === 'collections') { h('Collections (qnsult_prod):'); o('  signals       0 docs'); o('  cadence       0 docs'); o('  commitments   0 docs'); o('  agent_runs    0 docs'); h('  ⚠ Empty — run: adk start to seed initial data') }
-      else if (sub === 'find') { h(`Sampling ${arg || '<collection>'}…`); o('  (empty — no documents)'); o('  Tip: run `adk start` to trigger agents and populate collections') }
+      if (sub === 'ping') { h('Pinging MongoDB Atlas…'); o('  ✓ Connected · cluster0.xxxxx (M0 Sandbox)'); o('  ✓ DB: qnsult_prod · Auth: SCRAM-SHA-256') }
+      else if (sub === 'collections') { h('Collections (qnsult_prod):'); o('  signals       — stall/risk/opportunity signals written by AG-03, AG-07, AG-10'); o('  cadence       — exec contact cadence written by AG-02, AG-07'); o('  commitments   — delivery commitments from AG-05'); o('  pattern_library — armed patterns from AG-11'); o('  agent_runs    — full run history for all 12 agents'); h('  Tip: `adk start` triggers agents and populates these collections') }
+      else if (sub === 'find') { h(`Sampling ${arg || '<collection>'}…`); o('  (query MongoDB directly via ADK server — run `adk start` first)'); o(`  Endpoint: POST http://localhost:8000/apps/agents/.../runs`) }
       else { e('Usage: mongo ping  |  mongo collections  |  mongo find <col>') }
+
     } else if (base === 'adk') {
-      if (sub === 'start') { h('Starting Gemini ADK server…'); o('  ✓ Server up on http://localhost:8000'); o('  ✓ 12 agents registered'); o('  ✓ Gemini 2.0 Flash · MongoDB · Supabase connected'); o('  ✓ OpenAPI docs → http://localhost:8000/docs'); o('  ✓ ADK Chat available in the Chat tab →') }
-      else if (sub === 'stop') { h('Stopping ADK server…'); o('  ✓ Server stopped · all agent processes terminated') }
-      else if (sub === 'status') { h('ADK Server:'); o(`  Status:   ${adkRunning ? 'RUNNING' : 'STOPPED'}`); o('  Host:     http://localhost:8000'); o('  Agents:   12 registered'); o(`  Uptime:   ${adkRunning ? '22m 14s' : '—'}`) }
-      else if (sub === 'logs') { h('Recent logs (last 10):'); o('  07:31  AG-03  ALERT   Stall score 9.1 — Halcyon Systems'); o('  07:28  AG-10  INFO    23 emails scanned, 4 flagged for delay language'); o('  07:25  AG-04  INFO    Portfolio composite score recalculated: 5.8/10'); o('  07:20  AG-08  INFO    Budget deviation: Drift Capital −40% vs contract'); o('  07:15  AG-02  INFO    Exec gap: Greg House (Halcyon) 49d unresponsive'); o('  07:10  AG-07  INFO    Rel. score drop: Halcyon −3.2pts / 30d'); o('  07:05  AG-11  INFO    Pattern match: Executive Bridge → Halcyon (94%)'); o('  07:02  AG-09  INFO    Defense play queued: Exec Alignment Lock'); o('  06:58  AG-12  INFO    Outreach draft generated for Halcyon Systems'); o('  06:44  AG-06  INFO    AI displacement scan: 12 deliverables flagged >60%') }
-      else { e('Usage: adk start  |  adk stop  |  adk status  |  adk logs') }
+      if (sub === 'start') {
+        adkStartTimeRef.current = Date.now()
+        h('Starting Gemini ADK server…')
+        o(`  ✓ Server up on http://localhost:8000`)
+        o(`  ✓ ${agentsData.length} agents registered under app: agents`)
+        o(`  ✓ Root agent: momentum_agent (gemini-2.5-flash · Vertex AI)`)
+        o(`  ✓ ${agentsData.filter(a=>a.status==='Alerting').length} agents alerting · ${agentsData.filter(a=>a.status==='Analyzing').length} analyzing at startup`)
+        o(`  ✓ OpenAPI docs → http://localhost:8000/docs`)
+        o(`  ✓ ADK Chat (top-right Chat tab) now connected`)
+      } else if (sub === 'stop') {
+        adkStartTimeRef.current = null
+        h('Stopping ADK server…')
+        o('  ✓ Server stopped · all agent processes terminated')
+      } else if (sub === 'status') {
+        h('ADK Server:')
+        o(`  Status:     ${adkRunning ? 'RUNNING' : 'STOPPED'}`)
+        o(`  Host:       http://localhost:8000`)
+        o(`  App:        agents`)
+        o(`  Agents:     ${agentsData.length} registered`)
+        o(`  Uptime:     ${adkRunning && adkStartTimeRef.current ? fmtUptime(adkStartTimeRef.current) : '—'}`)
+        o(`  Alerting:   ${agentsData.filter(a=>a.status==='Alerting').map(a=>a.id).join(', ') || 'none'}`)
+        o(`  Analyzing:  ${agentsData.filter(a=>a.status==='Analyzing').map(a=>a.id).join(', ') || 'none'}`)
+        o(`  Queue:      ${queueEvents.length} events in dashboard_queue`)
+      } else if (sub === 'logs') {
+        h('Recent agent activity (from live state):')
+        // Build log lines: queueEvents first (most recent), then agentsData lastAction sorted by updatedAt
+        const logLines: string[] = []
+        // From Supabase realtime queue
+        queueEvents.slice(-5).reverse().forEach(ev => {
+          const ts = new Date(ev.created_at).toLocaleString('en-GB', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }).replace(',', '')
+          logLines.push(`  ${ts}  ${ev.agent_id.padEnd(6)}  ${ev.event_type.toUpperCase().padEnd(8)}  ${JSON.stringify(ev.payload).slice(0,60)}`)
+        })
+        // From agentsData — agents with a non-idle status or recent updatedAt
+        const recentAgents = [...agentsData]
+          .filter(a => (a as {updatedAt?:string}).updatedAt || a.status !== 'Idle')
+          .sort((a, b) => {
+            const ta = (a as {updatedAt?:string}).updatedAt ?? ''
+            const tb = (b as {updatedAt?:string}).updatedAt ?? ''
+            return tb.localeCompare(ta)
+          })
+          .slice(0, 10 - logLines.length)
+        recentAgents.forEach(a => {
+          const ts = fmtTs((a as {updatedAt?:string}).updatedAt)
+          const level = a.status === 'Alerting' ? 'ALERT  ' : a.status === 'Analyzing' ? 'INFO   ' : 'INFO   '
+          logLines.push(`  ${ts}  ${a.id.padEnd(6)}  ${level}  ${a.lastAction}`)
+        })
+        if (logLines.length === 0) {
+          o('  (no activity yet — run `adk start` to begin agent cycle)')
+        } else {
+          logLines.forEach(l => o(l))
+        }
+      } else { e('Usage: adk start  |  adk stop  |  adk status  |  adk logs') }
+
     } else {
       e(`Command not found: '${raw}'. Type 'help' to see available commands.`)
     }
     return results
   }
 
-  const getAdkResponse = (msg: string): string => {
-    const m = msg.toLowerCase()
-    if (m.includes('halcyon') || m.includes('stall') || m.includes('hcs'))
-      return 'AG-03 has flagged Halcyon Systems (HCS) with a stall score of 9.1/10 — the highest in the portfolio. Key signals: CTO Greg House has been unresponsive for 49 days, 3 consecutive milestones missed, and AG-10 detected delay language ("push back", "next month") in 4 recent emails. AG-11 has matched "The Executive Bridge" pattern (94% success rate). AG-12 has a ready-to-send outreach draft. Do you want me to dispatch it?'
-    if (m.includes('portfolio') || m.includes('overview') || m.includes('risk'))
-      return 'Portfolio health summary: 2 stalling (HCS stall 9.1, DRC stall 7.8), 1 at risk (VTG stall 5.4), 3 healthy (COR, MRC, PNG). Composite score: 5.8/10 (down 0.4 from last week). Total revenue at risk from stalling accounts: $217K. Top recommended action: Executive Bridge deployment for Halcyon, then Exec Alignment Lock to counter the Accenture RFP threat.'
-    if (m.includes('deploy') || m.includes('pattern') || m.includes('play'))
-      return 'AG-11 Pattern Library has 12 strategies catalogued (88% avg success rate, 162 total deployments). For Halcyon: The Executive Bridge (94% success). For Drift Capital: Pre-emptive Scope Locking (88%). For the Accenture threat: Exec Alignment Lock. Should I trigger all three as a batch deployment?'
-    if (m.includes('pinnacle') || m.includes('png'))
-      return 'Pinnacle Group (PNG) is the healthiest account. Stall score 0.8/10. Phase 3 of 4 at 85% progress, $145K revenue locked. AG-07 notes relationship score +1.1pts this month — exec cadence is strong. However, McKinsey has poached 2 former VP stakeholders. Recommend deploying the Stakeholder Anchor pattern proactively. Budget renewal cycle opens in ~45 days.'
-    if (m.includes('adk') || m.includes('server') || m.includes('start'))
-      return 'ADK server runs on port 8000 with 12 registered agents sharing a Supabase queue for real-time dashboard updates. MongoDB Atlas stores signal history, cadence logs, and agent run records. Use the Terminal tab → `adk start` to boot the server, or `adk logs` to see recent activity. Once running, all agents begin their 15-minute scheduled cycle automatically.'
-    if (m.includes('agent') || m.includes('ag-'))
-      return '12 agents across 4 layers: Data Sources (AG-10 Gmail Synth, AG-08 Budget Monitor, AG-02 Exec Gap), Specialists (AG-03 Stall Detect, AG-01 Value Chain, AG-07 Relationship, AG-05 Goal Alignment), Orchestrators (AG-06 AI Displacement, AG-04 Momentum Orch, AG-11 Pattern Library), Actions (AG-09 Defense Play, AG-12 Outreach Draft). Currently: AG-03 ALERTING · AG-02/AG-08/AG-10/AG-05 ANALYZING.'
-    if (m.includes('send') || m.includes('email') || m.includes('outreach'))
-      return 'AG-12 has a draft ready for Halcyon (Subject: "Project Alignment & Roadmap Steering Sync", zero-pressure tone, Executive Bridge aligned). You can dispatch it from the Stall Detection tab → Send via Gmail API. Alternatively confirm here and I will queue it to the Gmail API integration immediately.'
-    if (m.includes('mongo') || m.includes('supabase') || m.includes('db') || m.includes('database'))
-      return 'Infrastructure: Supabase (PostgreSQL) hosts the dashboard_queue (agent output buffer) and profiles tables with Row Level Security. MongoDB Atlas (M0 Sandbox) hosts signals, cadence, commitments, and agent_runs collections. Both are currently empty — use Terminal → `adk start` to trigger the initial data seeding run. All collections will populate after the first 15-minute agent cycle.'
-    return 'Understood. Current priority queue: (1) Executive Bridge for Halcyon — stall score critical at 9.1/10. (2) Exec Alignment Lock for Halcyon — Accenture RFP detected. (3) Stakeholder Anchor for Pinnacle — McKinsey talent poaching flagged. (4) Value Chain Shift for Halcyon & Drift — AI displacement exposure >80%. What would you like to drill into?'
+  async function sendPortfolioChat(userMsg: string) {
+    if (!userMsg.trim() || portfolioChatLoading) return
+    const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    setPortfolioChat(c => [...c, { role: 'user', text: userMsg, ts }])
+    setPortfolioChatLoading(true)
+    setTimeout(() => portfolioChatRef.current && (portfolioChatRef.current.scrollTop = portfolioChatRef.current.scrollHeight), 50)
+
+    try {
+      const res = await fetch('/api/portfolio-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMsg, sessionId: portfolioChatSessionId }),
+      })
+      const data = await res.json() as { reply?: string; error?: string }
+      const replyText = data.reply ?? data.error ?? 'No response from agent.'
+      const replyTs = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+      setPortfolioChat(c => [...c, { role: 'ai', text: replyText, ts: replyTs }])
+    } catch {
+      setPortfolioChat(c => [...c, { role: 'ai', text: 'Could not reach the ADK server. Start it with `adk start` in the Terminal tab.', ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }])
+    } finally {
+      setPortfolioChatLoading(false)
+      setTimeout(() => portfolioChatRef.current && (portfolioChatRef.current.scrollTop = portfolioChatRef.current.scrollHeight), 50)
+    }
   }
 
-  const getPortfolioResponse = (msg: string): string => {
-    const m = msg.toLowerCase()
-    if (m.includes('wall') || m.includes('project wall'))
-      return 'The Project Wall (x-axis at ~1.5 yr) is the strategic inflection point. Accounts that cross it shift from transactional work to deep, AI-resistant strategic partnership territory. Clients ahead of the wall (Pinnacle, Meridian, Apex, NovaTech) have relationship depth that competitors cannot replicate short-term. Accounts behind the wall face commoditisation risk — their work is replaceable by AI tooling or cheaper competitors within 12–18 months.'
-    if (m.includes('behind') || m.includes('danger') || m.includes('risk'))
-      return 'Accounts behind the Project Wall: Halcyon Systems (stall 9.1 — in AI Danger Zone, 210K revenue at risk), Drift Capital (stall 7.8 — scope creep, revenue down 40%), Vantage Partners (stall 5.4 — no exec contact 28 days), Redwood Advisors (value chain score 3.1 — commoditisation risk), Corestone Infra (AI exposure 78% — infrastructure automation threat). Recommend: prioritise strategic expansion plays for at-risk accounts before AI displacement window closes.'
-    if (m.includes('ahead') || m.includes('front') || m.includes('strategic') || m.includes('partnership'))
-      return 'Strategic Partnership Zone (above wall, high Y-axis): Pinnacle Group leads at 8.75 composite — exec sponsorship strong, McKinsey poaching 2 VPs (monitor), AI prototype Phase 3 unlocking $45K expansion. Meridian Capital at 8.00 — Q2 board pack reviewed, compliance expansion proposal pending. NovaTech and Apex Dynamics are progressing toward strategic territory — target exec alignment plays in next 4 weeks to lock them in before Gartner event cycle begins.'
-    if (m.includes('momentum') || m.includes('trajectory') || m.includes('trend'))
-      return 'Portfolio momentum W-23: composite 6.8 (+0.4 WoW). Pinnacle driving +0.6 delta. W-21 dip was the Halcyon stall escalation — pulled the composite down to 5.9. Recovery W-22→W-23 driven by Meridian compliance win and Apex kickoff. AG-04 projects W-24 composite at 7.1 if Halcyon escalation resolves and Vantage Partners exec re-engagement succeeds.'
-    if (m.includes('halcyon') || m.includes('hcs'))
-      return 'Halcyon Systems: deepest in the AI Danger Zone — x=0.8yr, y=2.1 (low value chain). Stall score 9.1/10. CTO Greg House dark 49 days. Despite 120-day engagement and $210K revenue, the work is in AI Danger Zone — cloud optimisation is 85% automatable. Two immediate risks: (1) executive relationship collapse, (2) AI tooling commoditises the deliverable before closure. Pattern Library recommends Executive Bridge + AI Governance Transition (91% combined success rate).'
-    if (m.includes('pinnacle') || m.includes('png'))
-      return 'Pinnacle Group is your strongest asset — top-right quadrant, strategic partnership zone. Phase 3 of 4 at 85%, $145K locked. Relationship score 8.75, exec sponsor highly engaged. Key alert: McKinsey talent acquisition of 2 VP stakeholders detected by AG-07. AG-11 recommends proactive Stakeholder Anchor deployment (3–5 day play) to prevent relationship dilution before Phase 4. Budget renewal opens in 45 days — ideal window to expand into ESG advisory service line.'
-    if (m.includes('ai') || m.includes('displacement') || m.includes('automat'))
-      return 'AI Displacement Risk by account (AG-06 latest scan): Halcyon 85% (cloud ops), Drift Capital 72% (financial reporting), Corestone 78% (infrastructure design), Redwood 65% (advisory commoditisation). Zero risk: Pinnacle (strategic advisory), Meridian (governance). Medium risk: Vantage (logistics optimisation 48%). Recommend AG-01 Value Chain Shift plays for Halcyon, Drift, and Corestone within 60 days before client discovers AI alternatives independently.'
-    if (m.includes('revenue') || m.includes('money') || m.includes('billing'))
-      return 'Portfolio revenue snapshot: Total ARR $740K. Healthy (>$80K): Pinnacle $145K, Halcyon $210K, Meridian $98K. At risk: Drift Capital $35K (billing -40%), Corestone $55K (engagement stalling). Highest revenue at risk is Halcyon at $210K — also the most critical stall. If Halcyon closes without expansion, that\'s a $200K+ gap to fill. Two expansion plays ready: Pinnacle (Phase 4 + ESG), Meridian (compliance scope).'
-    if (m.includes('filter') || m.includes('headcount') || m.includes('size'))
-      return 'Use the filter controls above the portfolio map to narrow by revenue range ($0–$250K), time period (Q4 2025, Q1 2026, Q2 2026), or headcount tier (<50, 50–150, 150+). This helps identify pattern: small headcount accounts (<50) cluster in the at-risk zone — they lack internal champions to maintain engagement momentum. Large enterprise accounts (150+) skew toward strategic partnership territory due to higher exec engagement surface area.'
-    return 'Portfolio Intelligence AI. I can answer questions about: client positioning relative to the Project Wall, momentum trajectories, AI displacement risks by account, revenue at risk, strategic expansion opportunities, and pattern deployment recommendations. Which account or dimension would you like to explore?'
+  type PatternEntry = typeof PATTERNS_DATA[number]
+  async function deployPattern(p: PatternEntry) {
+    if (deployingPattern) return
+    setDeployingPattern(p.name)
+
+    // Optimistic: flip AG-11 to Analyzing
+    setAgentsData(prev => prev.map(a =>
+      a.id === 'AG-11'
+        ? { ...a, status: 'Analyzing', lastAction: `Arming pattern: ${p.name}`, updatedAt: new Date().toISOString() }
+        : a
+    ))
+
+    try {
+      const res = await fetch('/api/pattern-deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patternName:  p.name,
+          trigger:      p.trigger,
+          category:     p.category,
+          difficulty:   p.difficulty,
+          owner:        p.owner,
+          successRate:  p.success,
+          deployments:  p.deployments,
+          sessionId:    patternDeploySessionId,
+        }),
+      })
+      const data = await res.json() as { reply?: string; error?: string }
+      if (data.reply) {
+        // AG-11 confirmed — mark Active with agent's own reply as lastAction
+        setAgentsData(prev => prev.map(a =>
+          a.id === 'AG-11'
+            ? { ...a, status: 'Active', lastAction: data.reply!.slice(0, 120), updatedAt: new Date().toISOString() }
+            : a
+        ))
+        setShowToast(`AG-11 armed "${p.name}" — ${data.reply.slice(0, 90)}${data.reply.length > 90 ? '…' : ''}`)
+      } else {
+        throw new Error(data.error ?? 'No reply from agent')
+      }
+    } catch (err) {
+      // Revert AG-11 to Idle on failure
+      setAgentsData(prev => prev.map(a =>
+        a.id === 'AG-11'
+          ? { ...a, status: 'Idle', lastAction: 'Pattern arm failed — ADK server unreachable', updatedAt: new Date().toISOString() }
+          : a
+      ))
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      setShowToast(`Failed to arm pattern — ${msg}`)
+    } finally {
+      setDeployingPattern(null)
+      setTimeout(() => setShowToast(null), 5000)
+    }
   }
 
   return (
@@ -830,6 +1367,7 @@ export default function Dashboard() {
           0%,100% { border-color: rgba(255,46,191,0.15); }
           50%      { border-color: rgba(155,48,217,0.35); }
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .workflow-scene {
           background: var(--bg-card); border: 1px solid rgba(255,46,191,0.1);
           border-radius: var(--r-xl); padding: 40px 24px 32px;
@@ -955,7 +1493,7 @@ export default function Dashboard() {
             </div>
             <div style={{ position: 'relative' }}>
               <div className="icon-btn" onClick={() => setShowNotifications(!showNotifications)} style={{ cursor: 'pointer', background: showNotifications ? 'rgba(255,46,191,0.1)' : 'transparent' }}>
-                <Icon.Bell /><span className="notif-pip">3</span>
+                <Icon.Bell /><span className="notif-pip">{queueEvents.length > 0 ? Math.min(queueEvents.length, 9) : 3}</span>
               </div>
               {showNotifications && (
                 <div style={{
@@ -977,32 +1515,81 @@ export default function Dashboard() {
                     <div style={{ fontSize: 10, color: 'var(--pink-hi)', cursor: 'pointer' }} onClick={() => setShowNotifications(false)}>Clear all</div>
                   </div>
                   <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
-                    <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} className="interactive-card" onClick={() => { setActiveTab('action_items'); setShowNotifications(false); }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--red)' }}>High Risk Alert</span>
-                        <span style={{ fontSize: 9, color: 'var(--text-3)' }}>10m ago</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.4 }}>AG-03 Stall Detection flagged critical delay phrasing on Halcyon Systems thread.</div>
-                    </div>
-                    <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} className="interactive-card" onClick={() => { setActiveTab('action_items'); setShowNotifications(false); }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--amber)' }}>Action Required</span>
-                        <span style={{ fontSize: 9, color: 'var(--text-3)' }}>32m ago</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.4 }}>AG-06 finished Apex Dynamics value chain mapping. Draft ready.</div>
-                    </div>
-                    <div style={{ padding: '12px 16px', cursor: 'pointer' }} className="interactive-card" onClick={() => { setActiveTab('home'); setShowNotifications(false); }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--green)' }}>System Event</span>
-                        <span style={{ fontSize: 9, color: 'var(--text-3)' }}>1h ago</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.4 }}>Orchestrator successfully synchronized with Google Calendar events.</div>
-                    </div>
+                    {queueEvents.length > 0 ? queueEvents.slice(0, 5).map((ev, i) => {
+                      const p = ev.payload as Record<string, unknown>
+                      const actionText = (p.action_text as string) ?? `Event from ${ev.agent_id}`
+                      const clientId = (p.client_id as string) ?? ''
+                      const ts = new Date(ev.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+                      const isLast = i === Math.min(queueEvents.length, 5) - 1
+                      return (
+                        <div key={ev.id} style={{ padding: '12px 16px', borderBottom: isLast ? 'none' : '1px solid var(--border)', cursor: 'pointer' }} className="interactive-card" onClick={() => { setActiveTab('action_items'); setShowNotifications(false); }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--amber)' }}>{ev.agent_id.toUpperCase()}</span>
+                            <span style={{ fontSize: 9, color: 'var(--text-3)' }}>{ts}</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.4 }}>{clientId ? `${clientId.toUpperCase()} — ` : ''}{actionText}</div>
+                        </div>
+                      )
+                    }) : (
+                      <>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} className="interactive-card" onClick={() => { setActiveTab('action_items'); setShowNotifications(false); }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--red)' }}>High Risk Alert</span>
+                            <span style={{ fontSize: 9, color: 'var(--text-3)' }}>10m ago</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.4 }}>AG-03 Stall Detection flagged critical delay phrasing on Halcyon Systems thread.</div>
+                        </div>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} className="interactive-card" onClick={() => { setActiveTab('action_items'); setShowNotifications(false); }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--amber)' }}>Action Required</span>
+                            <span style={{ fontSize: 9, color: 'var(--text-3)' }}>32m ago</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.4 }}>AG-06 finished Apex Dynamics value chain mapping. Draft ready.</div>
+                        </div>
+                        <div style={{ padding: '12px 16px', cursor: 'pointer' }} className="interactive-card" onClick={() => { setActiveTab('home'); setShowNotifications(false); }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--green)' }}>System Event</span>
+                            <span style={{ fontSize: 9, color: 'var(--text-3)' }}>1h ago</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.4 }}>Orchestrator successfully synchronized with Google Calendar events.</div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
             </div>
-            <div className="icon-btn"><Icon.MoreVert /></div>
+            <div style={{ position: 'relative' }}>
+              <div
+                className="icon-btn"
+                onClick={() => { setShowMoreMenu(v => !v); setShowNotifications(false) }}
+                style={{ cursor: 'pointer', background: showMoreMenu ? 'rgba(255,46,191,0.1)' : 'transparent' }}
+              >
+                <Icon.MoreVert />
+              </div>
+              {showMoreMenu && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 220, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 9999, padding: '6px 0', animation: 'rise 0.15s ease both' }}>
+                  {([
+                    { label: 'Settings',        icon: <Icon.Settings />, action: () => { setActiveTab('settings'); setShowMoreMenu(false) } },
+                    { label: devConsoleOpen ? 'Close Dev Console' : 'Open Dev Console', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>, action: () => { setDevConsoleOpen(v => !v); setShowMoreMenu(false) } },
+                    { label: 'Reload live data', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>, action: () => { setShowMoreMenu(false); window.location.reload() } },
+                    { label: 'Agent Network',    icon: <Icon.Cpu />, action: () => { setActiveTab('agent_status'); setShowMoreMenu(false) } },
+                    { label: 'Action Items',     icon: <Icon.CheckSquare />, action: () => { setActiveTab('action_items'); setShowMoreMenu(false) } },
+                  ] as { label: string; icon: React.ReactNode; action: () => void }[]).map((item, i, arr) => (
+                    <div
+                      key={item.label}
+                      onClick={item.action}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', cursor: 'pointer', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none', color: 'var(--text-2)', fontSize: 13, fontFamily: 'Outfit', fontWeight: 500, transition: 'background 0.12s' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span style={{ color: 'var(--text-3)', flexShrink: 0 }}>{item.icon}</span>
+                      {item.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <button className="console-toggle" onClick={() => setDevConsoleOpen(v => !v)}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
               {devConsoleOpen ? 'Close Console' : 'Dev Console'}
@@ -1019,7 +1606,7 @@ export default function Dashboard() {
               { id: 'home', ico: <Icon.Home />, label: 'Home' },
               { id: 'clients', ico: <Icon.Users />, label: 'Clients' },
               { id: 'engagements', ico: <Icon.Briefcase />, label: 'Engagements' },
-              { id: 'action_items', ico: <Icon.CheckSquare />, label: 'Action Items', count: '3', countClass: 'nc-red' },
+              { id: 'action_items', ico: <Icon.CheckSquare />, label: 'Action Items', count: String(actionItems.filter(a => !a.completed).length), countClass: 'nc-red' },
               { id: 'agent_events', ico: <Icon.Cpu />, label: 'Agent Workflow' },
               { id: 'portfolio_intelligence', ico: <Icon.BarChart2 />, label: 'Portfolio Intelligence' },
             ].map((item) => (
@@ -1040,13 +1627,13 @@ export default function Dashboard() {
               className={`nav-link${activeTab === 'stall_detection' ? ' active' : ''}`}
               onClick={() => setActiveTab('stall_detection')}
             >
-              <span className="nav-ico"><Icon.AlertTriangle /></span>Stall Detection<span className="nav-count nc-red">2</span>
+              <span className="nav-ico"><Icon.AlertTriangle /></span>Stall Detection<span className="nav-count nc-red">{actionItems.filter(a => !a.completed && a.urgency === 'crit').length || 2}</span>
             </div>
             <div 
               className={`nav-link${activeTab === 'ai_danger_zone' ? ' active' : ''}`}
               onClick={() => setActiveTab('ai_danger_zone')}
             >
-              <span className="nav-ico"><Icon.Shield /></span>AI Danger Zone<span className="nav-count nc-amber">5</span>
+              <span className="nav-ico"><Icon.Shield /></span>AI Danger Zone<span className="nav-count nc-amber">{clients.filter(c => (c.displacement_pct ?? AI_DISP_DEMO[c.name]?.displacement_pct ?? 0) >= 60).length || 4}</span>
             </div>
             <div 
               className={`nav-link${activeTab === 'competitive_risk' ? ' active' : ''}`}
@@ -1061,7 +1648,7 @@ export default function Dashboard() {
               className={`nav-link${activeTab === 'pattern_library' ? ' active' : ''}`}
               onClick={() => setActiveTab('pattern_library')}
             >
-              <span className="nav-ico"><Icon.Layers /></span>Pattern Library<span className="nav-count nc-pink">14</span>
+              <span className="nav-ico"><Icon.Layers /></span>Pattern Library<span className="nav-count nc-pink">{PATTERNS_DATA.length}</span>
             </div>
             <div 
               className={`nav-link${activeTab === 'settings' ? ' active' : ''}`}
@@ -1089,7 +1676,16 @@ export default function Dashboard() {
               <div className="page-head">
                 <div>
                   <div className="page-title">Portfolio <span>Intelligence</span></div>
-                  <div className="page-sub">Friday, 6 June 2026 · W-23 · Synced 07:31 UTC</div>
+                  <div className="page-sub">{(() => {
+                    const now = new Date()
+                    const startOfYear = new Date(now.getFullYear(), 0, 1)
+                    const weekNum = Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7)
+                    const day = now.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                    const syncTs = agentsData.length > 0 && agentsData[0].updatedAt
+                      ? new Date(agentsData[0].updatedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' UTC'
+                      : 'Demo Mode'
+                    return `${day} · W-${weekNum} · Synced ${syncTs}`
+                  })()}</div>
                 </div>
                 <div className="head-actions">
                   <button className="btn btn-ghost" onClick={() => { setShowToast('Filters cleared'); setTimeout(() => setShowToast(null), 3000) }}><Icon.SlidersH /> Filters</button>
@@ -1100,34 +1696,39 @@ export default function Dashboard() {
 
               {/* Filter row */}
               <div className="filter-row">
-                <div className="filter-chip active"><span className="chip-dot" />All Clients (11)</div>
-                <div className="filter-chip" style={{ cursor: 'pointer' }} onClick={() => { setSelectedClient('Drift Capital'); setActiveTab('clients'); }}>Stalling (2)</div>
-                <div className="filter-chip" style={{ cursor: 'pointer' }} onClick={() => { setSelectedClient('Corestone Infra'); setActiveTab('clients'); }}>At Risk (3)</div>
-                <div className="filter-chip" style={{ cursor: 'pointer' }} onClick={() => { setSelectedClient('Pinnacle Group'); setActiveTab('clients'); }}>Accelerating (4)</div>
+                <div className="filter-chip active"><span className="chip-dot" />All Clients ({clients.length})</div>
+                <div className="filter-chip" style={{ cursor: 'pointer' }} onClick={() => { setSelectedClient('Drift Capital'); setActiveTab('clients'); }}>Stalling ({clients.filter(c => c.status === 'Stalling').length})</div>
+                <div className="filter-chip" style={{ cursor: 'pointer' }} onClick={() => { setSelectedClient('Corestone Infra'); setActiveTab('clients'); }}>At Risk ({clients.filter(c => c.status === 'At Risk').length})</div>
+                <div className="filter-chip" style={{ cursor: 'pointer' }} onClick={() => { setSelectedClient('Pinnacle Group'); setActiveTab('clients'); }}>Accelerating ({clients.filter(c => c.status === 'Accelerating').length})</div>
               </div>
 
               {/* KPI row */}
               <div className="kpi-row">
                 <div className="kpi green-kpi interactive-card" onClick={() => { setSelectedClient('Pinnacle Group'); setActiveTab('clients') }}>
-                  <div className="kpi-main-row"><div className="kpi-icon-wrap" style={{ color: 'var(--green)' }}><Icon.TrendingUp /></div><div className="kpi-value">4</div><span className="kpi-delta delta-up">+2 wk</span></div>
+                  <div className="kpi-main-row"><div className="kpi-icon-wrap" style={{ color: 'var(--green)' }}><Icon.TrendingUp /></div><div className="kpi-value">{clients.filter(c => c.status === 'Accelerating').length}</div><span className="kpi-delta delta-up">+2 wk</span></div>
                   <div className="kpi-label">Accelerating Accounts</div>
                 </div>
                 <div className="kpi amber-kpi interactive-card" onClick={() => setActiveTab('ai_danger_zone')}>
-                  <div className="kpi-main-row"><div className="kpi-icon-wrap" style={{ color: 'var(--amber)' }}><Icon.AlertTriangle /></div><div className="kpi-value">3</div><span className="kpi-delta delta-dn">+1</span></div>
+                  <div className="kpi-main-row"><div className="kpi-icon-wrap" style={{ color: 'var(--amber)' }}><Icon.AlertTriangle /></div><div className="kpi-value">{clients.filter(c => c.status === 'At Risk').length}</div><span className="kpi-delta delta-dn">+1</span></div>
                   <div className="kpi-label">At Risk Accounts</div>
                 </div>
                 <div className="kpi red-kpi interactive-card" onClick={() => setActiveTab('stall_detection')}>
-                  <div className="kpi-main-row"><div className="kpi-icon-wrap" style={{ color: 'var(--red)' }}><Icon.TrendingDown /></div><div className="kpi-value">2</div><span className="kpi-delta delta-flat">—</span></div>
+                  <div className="kpi-main-row"><div className="kpi-icon-wrap" style={{ color: 'var(--red)' }}><Icon.TrendingDown /></div><div className="kpi-value">{clients.filter(c => c.status === 'Stalling').length}</div><span className="kpi-delta delta-flat">—</span></div>
                   <div className="kpi-label">Stalling Accounts</div>
                 </div>
                 <div className="kpi indigo-kpi interactive-card" onClick={() => setActiveTab('agent_events')}>
-                  <div className="kpi-main-row"><div className="kpi-icon-wrap" style={{ color: 'var(--indigo)' }}><Icon.Cpu /></div><div className="kpi-value">12</div><span className="kpi-delta delta-up">94%</span></div>
+                  <div className="kpi-main-row"><div className="kpi-icon-wrap" style={{ color: 'var(--indigo)' }}><Icon.Cpu /></div><div className="kpi-value">{agentsData.length}</div><span className="kpi-delta delta-up">{agentsData.filter(a => a.status === 'Analyzing' || a.status === 'Alerting').length} active</span></div>
                   <div className="kpi-label">Agents Live</div>
                 </div>
-                <div className="kpi interactive-card" onClick={() => { setShowToast('Composite score computed from 12 agent inputs.'); setTimeout(() => setShowToast(null), 3000) }}>
-                  <div className="kpi-main-row"><div className="kpi-icon-wrap"><Icon.Diamond /></div><div className="kpi-value">6.8</div><span className="kpi-delta delta-up">+0.4</span></div>
-                  <div className="kpi-label">Avg Composite Score</div>
-                </div>
+                {(() => {
+                  const avgScore = clients.length ? (clients.reduce((s, c) => s + Number(c.score || 0), 0) / clients.length).toFixed(1) : '—'
+                  return (
+                    <div className="kpi interactive-card" onClick={() => { setShowToast(`Composite score computed from ${agentsData.length} agent inputs.`); setTimeout(() => setShowToast(null), 3000) }}>
+                      <div className="kpi-main-row"><div className="kpi-icon-wrap"><Icon.Diamond /></div><div className="kpi-value">{avgScore}</div><span className="kpi-delta delta-up">+0.4</span></div>
+                      <div className="kpi-label">Avg Composite Score</div>
+                    </div>
+                  )
+                })()}
               </div>
 
               {/* Hero row */}
@@ -1228,91 +1829,146 @@ export default function Dashboard() {
                   <div className="card">
                     <div className="card-hd">
                       <div className="card-hd-title"><div className="title-pip" style={{ background: 'var(--indigo)', boxShadow: '0 0 8px var(--indigo-dim)' }} />Client Status</div>
-                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>11 accounts</div>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{clients.length} accounts</div>
                     </div>
                     <div className="client-rows">
-                      {[
-                        { cls: 'cl-a', initials: 'PG', name: 'Pinnacle Group', tag: 'Private Equity', filled: 5, color: 'var(--pink)', glow: 'var(--pink-glow)', pct: '87%' },
-                        { cls: 'cl-b', initials: 'MC', name: 'Meridian Capital', tag: 'Asset Management', filled: 4, color: 'var(--green)', glow: '', pct: '80%' },
-                        { cls: 'cl-d', initials: 'AD', name: 'Apex Dynamics', tag: 'Manufacturing', filled: 3, color: 'var(--indigo)', glow: '', pct: '70%' },
-                        { cls: 'cl-e', initials: 'VP', name: 'Vantage Partners', tag: 'Logistics', filled: 2, color: 'var(--amber)', glow: '', pct: '36%' },
-                        { cls: 'cl-c', initials: 'HS', name: 'Halcyon Systems', tag: 'Technology', filled: 1, color: 'var(--red)', glow: '', pct: '17%' },
-                      ].map((c) => (
-                        <div className="client-row" key={c.name} style={{ cursor: 'pointer' }} onClick={() => {
-                          setSelectedClient(c.name)
-                          setActiveTab('clients')
-                        }}>
-                          <div className={`client-logo ${c.cls}`}>{c.initials}</div>
-                          <div className="client-info">
-                            <div className="client-name">{c.name}</div>
-                            <div className="client-tag">{c.tag}</div>
+                      {[...clients].sort((a, b) => Number(b.score || 0) - Number(a.score || 0)).slice(0, 5).map((c) => {
+                        const sc = Number(c.score || 0)
+                        const color = c.status === 'Accelerating' ? 'var(--pink)'
+                          : c.status === 'On Track' ? 'var(--green)'
+                          : c.status === 'Progressing' ? 'var(--indigo)'
+                          : c.status === 'At Risk' ? 'var(--amber)'
+                          : 'var(--red)'
+                        const filled = Math.round(sc / 10 * 8)
+                        const initials = c.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
+                        return (
+                          <div className="client-row" key={c.name} style={{ cursor: 'pointer' }} onClick={() => { setSelectedClient(c.name); setActiveTab('clients') }}>
+                            <div className="client-logo cl-a" style={{ background: color + '22', color, border: `1px solid ${color}44` }}>{initials}</div>
+                            <div className="client-info">
+                              <div className="client-name">{c.name}</div>
+                              <div className="client-tag">{c.tag}</div>
+                            </div>
+                            <div className="dot-progress">
+                              {Array.from({ length: 8 }, (_, i) => (
+                                <div key={i} className="dp-dot" style={{ background: color, opacity: i < filled ? 1 : 0.14 }} />
+                              ))}
+                            </div>
+                            <span className="score-pct" style={{ color }}>{sc.toFixed(1)}</span>
                           </div>
-                          <div className="dot-progress">
-                            {Array.from({ length: 8 }, (_, i) => (
-                              <div key={i} className="dp-dot" style={{ background: c.color, opacity: i < c.filled ? 1 : 0.14 }} />
-                            ))}
-                          </div>
-                          <span className="score-pct" style={{ color: c.color }}>{c.pct}</span>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
 
-                  <div className="card">
-                    <div className="card-hd">
-                      <div className="card-hd-title"><div className="title-pip" style={{ background: 'var(--violet)', boxShadow: '0 0 8px var(--violet-dim)' }} />Portfolio Split</div>
-                    </div>
-                    <div className="donut-body">
-                      <div className="donut-legend">
-                        {[
-                          { color: 'var(--pink)', glow: 'var(--pink-glow)', label: 'Accelerating', val: '36%', valColor: 'var(--pink)' },
-                          { color: 'var(--indigo)', label: 'On Track', val: '18%' },
-                          { color: 'var(--violet)', label: 'Progressing', val: '19%' },
-                          { color: 'var(--amber)', label: 'At Risk', val: '18%' },
-                          { color: 'var(--red)', label: 'Stalling', val: '9%' },
-                        ].map((d) => (
-                          <div className="dl-row" key={d.label}>
-                            <div className="dl-dot" style={{ background: d.color, ...(d.glow && { boxShadow: `0 0 6px ${d.glow}` }) }} />
-                            {d.label}
-                            <span className="dl-val" style={d.valColor ? { color: d.valColor } : {}}>{d.val}</span>
+                  {(() => {
+                    const total = clients.length || 1
+                    const circ = 251.3
+                    const counts = {
+                      Stalling:     clients.filter(c => c.status === 'Stalling').length,
+                      'At Risk':    clients.filter(c => c.status === 'At Risk').length,
+                      Progressing:  clients.filter(c => c.status === 'Progressing').length,
+                      'On Track':   clients.filter(c => c.status === 'On Track').length,
+                      Accelerating: clients.filter(c => c.status === 'Accelerating').length,
+                    }
+                    const seg = (n: number) => ((n / total) * circ).toFixed(1)
+                    const pct = (n: number) => Math.round(n / total * 100) + '%'
+                    const gaps = [
+                      Number(seg(counts.Stalling)),
+                      Number(seg(counts['At Risk'])),
+                      Number(seg(counts.Progressing)),
+                      Number(seg(counts['On Track'])),
+                      Number(seg(counts.Accelerating)),
+                    ]
+                    const offsets = gaps.reduce((acc, g, i) => [...acc, -(acc[i] + (i > 0 ? gaps[i-1] : 0))], [0])
+                    // cumulative offset: each segment starts after the previous ones
+                    let cumOff = 0
+                    const segs = [
+                      { color: '#EF4444', n: counts.Stalling },
+                      { color: '#F59E0B', n: counts['At Risk'] },
+                      { color: '#9B30D9', n: counts.Progressing },
+                      { color: '#818CF8', n: counts['On Track'] },
+                      { color: '#FF2EBF', n: counts.Accelerating },
+                    ].map(s => {
+                      const arc = (s.n / total) * circ
+                      const off = -cumOff
+                      cumOff += arc
+                      return { ...s, arc, off }
+                    })
+                    return (
+                      <div className="card">
+                        <div className="card-hd">
+                          <div className="card-hd-title"><div className="title-pip" style={{ background: 'var(--violet)', boxShadow: '0 0 8px var(--violet-dim)' }} />Portfolio Split</div>
+                        </div>
+                        <div className="donut-body">
+                          <div className="donut-legend">
+                            {[
+                              { color: 'var(--pink)', glow: 'var(--pink-glow)', label: 'Accelerating', val: pct(counts.Accelerating), valColor: 'var(--pink)' },
+                              { color: 'var(--indigo)', label: 'On Track', val: pct(counts['On Track']) },
+                              { color: 'var(--violet)', label: 'Progressing', val: pct(counts.Progressing) },
+                              { color: 'var(--amber)', label: 'At Risk', val: pct(counts['At Risk']) },
+                              { color: 'var(--red)', label: 'Stalling', val: pct(counts.Stalling) },
+                            ].map((d) => (
+                              <div className="dl-row" key={d.label}>
+                                <div className="dl-dot" style={{ background: d.color, ...(d.glow && { boxShadow: `0 0 6px ${d.glow}` }) }} />
+                                {d.label}
+                                <span className="dl-val" style={d.valColor ? { color: d.valColor } : {}}>{d.val}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                      <div className="donut-center-wrap">
-                        <svg viewBox="0 0 110 110" width="110" height="110">
-                          <defs><filter id="glow-pink"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-                          <circle cx="55" cy="55" r="40" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="10"/>
-                          <circle cx="55" cy="55" r="40" fill="none" stroke="#EF4444" strokeWidth="10" strokeDasharray="22.6 228.7" strokeDashoffset="0" strokeLinecap="round"/>
-                          <circle cx="55" cy="55" r="40" fill="none" stroke="#F59E0B" strokeWidth="10" strokeDasharray="45.2 206.1" strokeDashoffset="-22.6" strokeLinecap="round"/>
-                          <circle cx="55" cy="55" r="40" fill="none" stroke="#9B30D9" strokeWidth="10" strokeDasharray="47.7 203.6" strokeDashoffset="-67.8" strokeLinecap="round"/>
-                          <circle cx="55" cy="55" r="40" fill="none" stroke="#818CF8" strokeWidth="10" strokeDasharray="45.2 206.1" strokeDashoffset="-115.5" strokeLinecap="round"/>
-                          <circle cx="55" cy="55" r="40" fill="none" stroke="#FF2EBF" strokeWidth="10" strokeDasharray="90.5 160.8" strokeDashoffset="-160.7" strokeLinecap="round" filter="url(#glow-pink)"/>
-                        </svg>
-                        <div className="donut-inner-text">
-                          <div className="donut-big">100%</div>
-                          <div className="donut-small">Total</div>
+                          <div className="donut-center-wrap">
+                            <svg viewBox="0 0 110 110" width="110" height="110">
+                              <defs><filter id="glow-pink"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+                              <circle cx="55" cy="55" r="40" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="10"/>
+                              {segs.map(s => s.n > 0 && (
+                                <circle key={s.color} cx="55" cy="55" r="40" fill="none" stroke={s.color} strokeWidth="10"
+                                  strokeDasharray={`${s.arc.toFixed(1)} ${(circ - s.arc).toFixed(1)}`}
+                                  strokeDashoffset={s.off.toFixed(1)}
+                                  strokeLinecap="round"
+                                  filter={s.color === '#FF2EBF' ? 'url(#glow-pink)' : undefined}
+                                />
+                              ))}
+                            </svg>
+                            <div className="donut-inner-text">
+                              <div className="donut-big">100%</div>
+                              <div className="donut-small">Total</div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
+                    )
+                  })()}
                 </div>
               </div>
 
               {/* Two-Axis Map */}
               {(() => {
-                const mapClients = [
-                  { name: 'Pinnacle Group', cx: 422, cy: 59, color: '#FF2EBF', rev: 145, headcount: 200, sector: 'Private Equity', score: 8.75, badge: 'Accelerating', glow: true, pulse: true, aiRisk: '12%', phase: 'Phase 3/4' },
-                  { name: 'Meridian Capital', cx: 389, cy: 80, color: '#FF2EBF', rev: 98, headcount: 150, sector: 'Asset Management', score: 8.00, badge: 'Accelerating', aiRisk: '18%', phase: 'Phase 2/4' },
-                  { name: 'NovaTech Solutions', cx: 318, cy: 88, color: '#818CF8', rev: 85, headcount: 120, sector: 'Technology', score: 7.00, badge: 'On Track', aiRisk: '34%', phase: 'Phase 2/3' },
-                  { name: 'Apex Dynamics', cx: 343, cy: 106, color: '#818CF8', rev: 72, headcount: 90, sector: 'Manufacturing', score: 7.00, badge: 'On Track', aiRisk: '28%', phase: 'Phase 1/4' },
-                  { name: 'Stratford & Co', cx: 247, cy: 154, color: '#9B30D9', rev: 65, headcount: 80, sector: 'Consulting', score: 5.00, badge: 'Progressing', aiRisk: '45%', phase: 'Phase 2/3' },
-                  { name: 'Lumis Group', cx: 276, cy: 175, color: '#9B30D9', rev: 55, headcount: 60, sector: 'Finance', score: 5.00, badge: 'Progressing', aiRisk: '52%', phase: 'Phase 1/3' },
-                  { name: 'Vantage Partners', cx: 180, cy: 189, color: '#F59E0B', rev: 42, headcount: 45, sector: 'Logistics', score: 3.60, badge: 'At Risk', aiRisk: '48%', phase: 'Phase 2/4' },
-                  { name: 'Redwood Advisors', cx: 163, cy: 203, color: '#F59E0B', rev: 38, headcount: 40, sector: 'Advisory', score: 3.15, badge: 'At Risk', aiRisk: '65%', phase: 'Phase 1/3' },
-                  { name: 'Corestone Infra', cx: 213, cy: 212, color: '#F59E0B', rev: 55, headcount: 70, sector: 'Infrastructure', score: 3.60, badge: 'At Risk', aiRisk: '78%', phase: 'Phase 2/4' },
-                  { name: 'Halcyon Systems', cx: 121, cy: 261, color: '#EF4444', rev: 210, headcount: 300, sector: 'Technology', score: 1.65, badge: 'Stalling', glow: true, pulse: true, aiRisk: '85%', phase: 'Phase 4/4' },
-                  { name: 'Drift Capital', cx: 138, cy: 270, color: '#EF4444', rev: 35, headcount: 30, sector: 'Finance', score: 1.70, badge: 'Stalling', aiRisk: '72%', phase: 'Phase 1/2' },
+                const statusColor = (status: string) =>
+                  status === 'Accelerating' ? '#FF2EBF'
+                  : status === 'On Track' ? '#818CF8'
+                  : status === 'Progressing' ? '#9B30D9'
+                  : status === 'At Risk' ? '#F59E0B'
+                  : '#EF4444'
+                const MAP_BASE = [
+                  { name: 'Pinnacle Group',   cx: 422, cy: 59,  rev: 145, headcount: 200, sector: 'Private Equity',   aiRisk: '12%', phase: 'Phase 3/4' },
+                  { name: 'Meridian Capital', cx: 389, cy: 80,  rev: 98,  headcount: 150, sector: 'Asset Management', aiRisk: '18%', phase: 'Phase 2/4' },
+                  { name: 'NovaTech Solutions',cx:318, cy: 88,  rev: 85,  headcount: 120, sector: 'Technology',        aiRisk: '34%', phase: 'Phase 2/3' },
+                  { name: 'Apex Dynamics',    cx: 343, cy: 106, rev: 72,  headcount: 90,  sector: 'Manufacturing',    aiRisk: '28%', phase: 'Phase 1/4' },
+                  { name: 'Stratford & Co',   cx: 247, cy: 154, rev: 65,  headcount: 80,  sector: 'Consulting',       aiRisk: '45%', phase: 'Phase 2/3' },
+                  { name: 'Lumis Group',      cx: 276, cy: 175, rev: 55,  headcount: 60,  sector: 'Finance',          aiRisk: '52%', phase: 'Phase 1/3' },
+                  { name: 'Vantage Partners', cx: 180, cy: 189, rev: 42,  headcount: 45,  sector: 'Logistics',        aiRisk: '48%', phase: 'Phase 2/4' },
+                  { name: 'Redwood Advisors', cx: 163, cy: 203, rev: 38,  headcount: 40,  sector: 'Advisory',         aiRisk: '65%', phase: 'Phase 1/3' },
+                  { name: 'Corestone Infra',  cx: 213, cy: 212, rev: 55,  headcount: 70,  sector: 'Infrastructure',   aiRisk: '78%', phase: 'Phase 2/4' },
+                  { name: 'Halcyon Systems',  cx: 121, cy: 261, rev: 210, headcount: 300, sector: 'Technology',       aiRisk: '85%', phase: 'Phase 4/4' },
+                  { name: 'Drift Capital',    cx: 138, cy: 270, rev: 35,  headcount: 30,  sector: 'Finance',          aiRisk: '72%', phase: 'Phase 1/2' },
                 ]
+                const mapClients = MAP_BASE.map(base => {
+                  const live = clients.find(c => c.name === base.name)
+                  const sc = Number(live?.score ?? 0)
+                  const status = live?.status ?? 'On Track'
+                  const color = statusColor(status)
+                  const isAlert = status === 'Stalling'
+                  return { ...base, score: sc || sc, badge: status, color, glow: isAlert, pulse: isAlert }
+                })
                 const filteredClients = mapClients.filter(c => {
                   const revOk = mapRevFilter === 'All' ||
                     (mapRevFilter === '<$50K' && c.rev < 50) ||
@@ -1328,6 +1984,23 @@ export default function Dashboard() {
                 const chipBtn = (label: string, active: boolean, onClick: () => void) => (
                   <button key={label} onClick={onClick} style={{ padding: '4px 10px', borderRadius: 4, background: active ? 'var(--pink-dim)' : 'var(--bg-inset)', border: `1px solid ${active ? 'rgba(255,46,191,0.3)' : 'var(--border)'}`, color: active ? 'var(--pink-hi)' : 'var(--text-2)', fontFamily: 'JetBrains Mono, monospace', fontSize: 10, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.04em' }}>{label}</button>
                 )
+                const rankList = (onClickExtra?: () => void) => [...clients]
+                  .sort((a, b) => Number(b.score || 0) - Number(a.score || 0))
+                  .map(r => {
+                    const sc = Number(r.score || 0)
+                    const col = statusColor(r.status ?? '')
+                    const isStall = r.status === 'Stalling'
+                    return (
+                      <div key={r.name} className="qside-item"
+                        style={isStall ? { borderColor: 'rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.05)', cursor: 'pointer' } : { cursor: 'pointer' }}
+                        onClick={() => { setSelectedClient(r.name); setActiveTab('clients'); onClickExtra?.() }}
+                      >
+                        <div className="qside-status" style={{ background: col, ...(isStall ? { animation: 'dot-pulse 1.5s ease-in-out infinite' } : {}) }}/>
+                        <div className="qside-name" style={isStall ? { color: '#EF4444' } : {}}>{r.name}</div>
+                        <div className="qside-score" style={{ color: col }}>{sc.toFixed(2)}</div>
+                      </div>
+                    )
+                  })
                 const mapSvg = (viewBox: string, svgStyle: React.CSSProperties) => (
                   <svg viewBox={viewBox} xmlns="http://www.w3.org/2000/svg" style={svgStyle} onMouseLeave={() => setMapHoveredClient(null)}>
                     <defs>
@@ -1452,25 +2125,7 @@ export default function Dashboard() {
                           {/* Rank panel */}
                           <div style={{ width: 200, flexShrink: 0, borderLeft: '1px solid var(--border)', overflowY: 'auto', padding: '16px 12px' }}>
                             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Portfolio Rank</div>
-                            {[
-                              { name: 'Pinnacle Group', score: '8.75', color: '#FF2EBF', glow: true },
-                              { name: 'Meridian Capital', score: '8.00', color: '#FF2EBF' },
-                              { name: 'NovaTech Solutions', score: '7.00', color: '#818CF8' },
-                              { name: 'Apex Dynamics', score: '7.00', color: '#818CF8' },
-                              { name: 'Lumis Group', score: '5.00', color: '#9B30D9' },
-                              { name: 'Stratford & Co', score: '5.00', color: '#9B30D9' },
-                              { name: 'Corestone Infra', score: '3.60', color: '#F59E0B' },
-                              { name: 'Vantage Partners', score: '3.60', color: '#F59E0B' },
-                              { name: 'Redwood Advisors', score: '3.15', color: '#F59E0B' },
-                              { name: 'Drift Capital', score: '1.70', color: '#EF4444' },
-                              { name: 'Halcyon Systems', score: '1.65', color: '#EF4444', highlight: true },
-                            ].map(r => (
-                              <div key={r.name} className="qside-item" style={{ ...(r.highlight ? { borderColor: 'rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.05)' } : {}), cursor: 'pointer' }} onClick={() => { setSelectedClient(r.name); setActiveTab('clients'); setMapFullscreen(false) }}>
-                                <div className="qside-status" style={{ background: r.color, ...(r.glow ? { boxShadow: `0 0 5px ${r.color}` } : {}), ...(r.color === '#EF4444' ? { animation: 'dot-pulse 1.5s ease-in-out infinite' } : {}) }}/>
-                                <div className="qside-name" style={r.highlight ? { color: '#EF4444' } : {}}>{r.name}</div>
-                                <div className="qside-score" style={{ color: r.color }}>{r.score}</div>
-                              </div>
-                            ))}
+                            {rankList(() => setMapFullscreen(false))}
                           </div>
                         </div>
                       </div>,
@@ -1502,25 +2157,7 @@ export default function Dashboard() {
                   </div>
                   <div className="quad-side">
                     <div className="qside-title">Portfolio Rank</div>
-                    {[
-                      { name: 'Pinnacle Group', score: '8.75', color: '#FF2EBF', glow: true },
-                      { name: 'Meridian Capital', score: '8.00', color: '#FF2EBF' },
-                      { name: 'NovaTech Solutions', score: '7.00', color: '#818CF8' },
-                      { name: 'Apex Dynamics', score: '7.00', color: '#818CF8' },
-                      { name: 'Lumis Group', score: '5.00', color: '#9B30D9' },
-                      { name: 'Stratford & Co', score: '5.00', color: '#9B30D9' },
-                      { name: 'Corestone Infra', score: '3.60', color: '#F59E0B' },
-                      { name: 'Vantage Partners', score: '3.60', color: '#F59E0B' },
-                      { name: 'Redwood Advisors', score: '3.15', color: '#F59E0B' },
-                      { name: 'Drift Capital', score: '1.70', color: '#EF4444' },
-                      { name: 'Halcyon Systems', score: '1.65', color: '#EF4444', highlight: true },
-                    ].map((r) => (
-                      <div key={r.name} className="qside-item" style={r.highlight ? { borderColor: 'rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.05)', cursor: 'pointer' } : { cursor: 'pointer' }} onClick={() => { setSelectedClient(r.name); setActiveTab('clients') }}>
-                        <div className="qside-status" style={{ background: r.color, ...(r.glow ? { boxShadow: `0 0 5px ${r.color}` } : {}), ...(r.color === '#EF4444' ? { animation: 'dot-pulse 1.5s ease-in-out infinite' } : {}) }} />
-                        <div className="qside-name" style={r.highlight ? { color: '#EF4444' } : {}}>{r.name}</div>
-                        <div className="qside-score" style={{ color: r.color }}>{r.score}</div>
-                      </div>
-                    ))}
+                    {rankList()}
                   </div>
                 </div>
               </div>
@@ -1544,48 +2181,39 @@ export default function Dashboard() {
                 <div ref={portfolioChatRef} style={{ height: 220, overflowY: 'auto', padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {portfolioChat.map((m, i) => (
                     <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start', gap: 3 }}>
-                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.05em' }}>{m.role === 'user' ? 'You' : 'Portfolio AI'} · {m.ts}</div>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.05em' }}>{m.role === 'user' ? 'You' : 'AG-04 · Portfolio AI'} · {m.ts}</div>
                       <div style={{ maxWidth: '80%', padding: '9px 14px', borderRadius: m.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px', background: m.role === 'user' ? 'var(--pink-dim)' : 'var(--bg-inset)', border: `1px solid ${m.role === 'user' ? 'rgba(255,46,191,0.2)' : 'var(--border)'}`, fontFamily: 'Outfit, sans-serif', fontSize: 13, color: m.role === 'user' ? 'var(--pink-hi)' : 'var(--text-1)', lineHeight: 1.55 }}>{m.text}</div>
                     </div>
                   ))}
+                  {portfolioChatLoading && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3 }}>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.05em' }}>AG-04 · Portfolio AI · thinking…</div>
+                      <div style={{ padding: '9px 14px', borderRadius: '12px 12px 12px 4px', background: 'var(--bg-inset)', border: '1px solid var(--border)', display: 'flex', gap: 4, alignItems: 'center' }}>
+                        {[0,1,2].map(d => <div key={d} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pink)', opacity: 0.7, animation: `dot-pulse 1.2s ease-in-out ${d * 0.2}s infinite` }}/>)}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div style={{ padding: '10px 20px 16px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>
                   <input
                     value={portfolioChatInput}
                     onChange={e => setPortfolioChatInput(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter' && portfolioChatInput.trim()) {
-                        const userMsg = portfolioChatInput.trim()
-                        const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+                      if (e.key === 'Enter' && portfolioChatInput.trim() && !portfolioChatLoading) {
+                        const msg = portfolioChatInput.trim()
                         setPortfolioChatInput('')
-                        setPortfolioChat(c => [...c, { role: 'user', text: userMsg, ts }])
-                        setTimeout(() => {
-                          const reply = getPortfolioResponse(userMsg)
-                          setPortfolioChat(c => [...c, { role: 'ai', text: reply, ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }])
-                          if (portfolioChatRef.current) portfolioChatRef.current.scrollTop = portfolioChatRef.current.scrollHeight
-                        }, 700)
-                        if (portfolioChatRef.current) portfolioChatRef.current.scrollTop = portfolioChatRef.current.scrollHeight
+                        sendPortfolioChat(msg)
                       }
                     }}
-                    placeholder="Ask about positioning, risk, momentum, the wall..."
-                    style={{ flex: 1, background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', color: 'var(--text-1)', fontFamily: 'Outfit, sans-serif', fontSize: 13, outline: 'none' }}
+                    disabled={portfolioChatLoading}
+                    placeholder={portfolioChatLoading ? 'AG-04 is thinking…' : 'Ask about positioning, risk, momentum, the wall…'}
+                    style={{ flex: 1, background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', color: 'var(--text-1)', fontFamily: 'Outfit, sans-serif', fontSize: 13, outline: 'none', opacity: portfolioChatLoading ? 0.6 : 1 }}
                   />
                   <button
-                    onClick={() => {
-                      if (!portfolioChatInput.trim()) return
-                      const userMsg = portfolioChatInput.trim()
-                      const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-                      setPortfolioChatInput('')
-                      setPortfolioChat(c => [...c, { role: 'user', text: userMsg, ts }])
-                      setTimeout(() => {
-                        const reply = getPortfolioResponse(userMsg)
-                        setPortfolioChat(c => [...c, { role: 'ai', text: reply, ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }])
-                        if (portfolioChatRef.current) portfolioChatRef.current.scrollTop = portfolioChatRef.current.scrollHeight
-                      }, 700)
-                      if (portfolioChatRef.current) portfolioChatRef.current.scrollTop = portfolioChatRef.current.scrollHeight
-                    }}
-                    style={{ padding: '9px 18px', background: 'var(--pink-dim)', border: '1px solid rgba(255,46,191,0.3)', borderRadius: 8, color: 'var(--pink-hi)', fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                  >Send</button>
+                    onClick={() => { const msg = portfolioChatInput.trim(); if (msg) { setPortfolioChatInput(''); sendPortfolioChat(msg) } }}
+                    disabled={portfolioChatLoading || !portfolioChatInput.trim()}
+                    style={{ padding: '9px 18px', background: 'var(--pink-dim)', border: '1px solid rgba(255,46,191,0.3)', borderRadius: 8, color: 'var(--pink-hi)', fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 600, cursor: portfolioChatLoading ? 'not-allowed' : 'pointer', opacity: portfolioChatLoading ? 0.5 : 1 }}
+                  >{portfolioChatLoading ? '…' : 'Send'}</button>
                 </div>
               </div>
 
@@ -1597,29 +2225,28 @@ export default function Dashboard() {
                       <div className="title-pip" style={{ background: 'var(--red)', boxShadow: '0 0 6px rgba(239,68,68,0.4)', animation: 'dot-pulse 2s ease-in-out infinite' }} />
                       Priority Queue
                     </div>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>7 actions</div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{actionItems.filter(a => !a.completed).length} pending</div>
                   </div>
                   <div className="action-list">
-                    {[
-                      { client: 'Halcyon Systems', desc: 'Stall score 9.1 — 3 missed milestones, exec dark 7 wks. Immediate escalation required.', agent: 'stall_detection', date: 'Due Jun 9', owner: 'Partner lead', urgency: 'crit', badge: 'Critical' },
-                      { client: 'Drift Capital', desc: 'Billing −40% vs contract. Scope creep with no change order — revenue at risk.', agent: 'stall_detection', date: 'Due Jun 8', owner: 'Account mgr', urgency: 'crit', badge: 'Critical' },
-                      { client: 'Vantage Partners', desc: 'Budget cycle opens Jul 1. Value chain proposal window — 3 qualified service expansions identified.', agent: 'value_chain', date: 'Due Jun 20', owner: 'Principal', urgency: 'high', badge: 'High' },
-                      { client: 'Corestone Infra', desc: 'No exec contact in 28 days. Relationship health score dropped 2.1 pts. Re-engage now.', agent: 'relationship', date: 'Due Jun 12', owner: 'Director', urgency: 'high', badge: 'High' },
-                    ].map((a) => (
-                      <div key={a.client + a.date} className={`action-item urg-${a.urgency}`} style={{ cursor: 'pointer' }} onClick={() => setActiveTab('action_items')}>
-                        <div className="action-bar" />
-                        <div className="action-body">
-                          <div className="action-client-name">{a.client}</div>
-                          <div className="action-desc">{a.desc}</div>
-                          <div className="action-tags">
-                            <span className="atag atag-agent">{a.agent}</span>
-                            <span className="atag atag-date">{a.date}</span>
-                            <span className="atag atag-default">{a.owner}</span>
+                    {actionItems.filter(a => !a.completed).slice(0, 4).map((a) => {
+                      const urgencyLabel = a.urgency === 'crit' ? 'Critical' : a.urgency === 'high' ? 'High' : a.urgency === 'medium' ? 'Medium' : 'Low'
+                      const dueFmt = a.due_date ? 'Due ' + new Date(a.due_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+                      return (
+                        <div key={a.id} className={`action-item urg-${a.urgency}`} style={{ cursor: 'pointer' }} onClick={() => setActiveTab('action_items')}>
+                          <div className="action-bar" />
+                          <div className="action-body">
+                            <div className="action-client-name">{a.client_name}</div>
+                            <div className="action-desc">{a.description}</div>
+                            <div className="action-tags">
+                              <span className="atag atag-agent">{a.source_agent}</span>
+                              {dueFmt && <span className="atag atag-date">{dueFmt}</span>}
+                              {a.owner && <span className="atag atag-default">{a.owner}</span>}
+                            </div>
                           </div>
+                          <div className="action-badge">{urgencyLabel}</div>
                         </div>
-                        <div className="action-badge">{a.badge}</div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
 
@@ -1693,19 +2320,19 @@ export default function Dashboard() {
 
               <div className="kpi-row">
                 <div className="kpi indigo-kpi interactive-card" onClick={() => setActiveTab('clients')}>
-                  <div className="kpi-main-row"><div className="kpi-icon-wrap"><Icon.Users /></div><div className="kpi-value">11</div></div>
+                  <div className="kpi-main-row"><div className="kpi-icon-wrap"><Icon.Users /></div><div className="kpi-value">{clients.length}</div></div>
                   <div className="kpi-label">Active Clients</div>
                 </div>
                 <div className="kpi green-kpi interactive-card" onClick={() => setActiveTab('agent_events')}>
-                  <div className="kpi-main-row"><div className="kpi-icon-wrap"><Icon.Cpu /></div><div className="kpi-value">12</div></div>
+                  <div className="kpi-main-row"><div className="kpi-icon-wrap"><Icon.Cpu /></div><div className="kpi-value">{agentsData.length}</div></div>
                   <div className="kpi-label">Agents Active</div>
                 </div>
                 <div className="kpi red-kpi interactive-card" onClick={() => setActiveTab('action_items')}>
-                  <div className="kpi-main-row"><div className="kpi-icon-wrap"><Icon.CheckSquare /></div><div className="kpi-value">7</div></div>
+                  <div className="kpi-main-row"><div className="kpi-icon-wrap"><Icon.CheckSquare /></div><div className="kpi-value">{actionItems.filter(a => !a.completed).length}</div></div>
                   <div className="kpi-label">Pending Actions</div>
                 </div>
                 <div className="kpi amber-kpi interactive-card" onClick={() => setActiveTab('stall_detection')}>
-                  <div className="kpi-main-row"><div className="kpi-icon-wrap"><Icon.AlertTriangle /></div><div className="kpi-value">2</div></div>
+                  <div className="kpi-main-row"><div className="kpi-icon-wrap"><Icon.AlertTriangle /></div><div className="kpi-value">{clients.filter(c => c.status === 'Stalling').length}</div></div>
                   <div className="kpi-label">Stalling Accounts</div>
                 </div>
               </div>
@@ -1739,7 +2366,7 @@ export default function Dashboard() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' }}>Recent Client Mails</div>
                         {(() => {
-                          const filteredMails = MOCK_MAILS.filter(m => 
+                          const filteredMails = mails.filter(m =>
                             m.client.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             m.sender.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             m.subject.toLowerCase().includes(searchQuery.toLowerCase())
@@ -1764,40 +2391,137 @@ export default function Dashboard() {
                         })()}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' }}>Send Quick Update</div>
-                        <textarea className="search-input" placeholder="Draft a quick update to selected client..." style={{ flex: 1, resize: 'none', padding: 12, fontFamily: 'Outfit' }}></textarea>
-                        <button className="btn btn-pink" style={{ alignSelf: 'flex-end' }} onClick={() => { setShowToast('Update sent successfully'); setTimeout(() => setShowToast(null), 3000) }}>Send Update</button>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' }}>Send Quick Update</div>
+                          {selectedClient && (
+                            <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--pink-hi)', background: 'rgba(255,46,191,0.08)', border: '1px solid rgba(255,46,191,0.2)', borderRadius: 4, padding: '2px 7px' }}>
+                              To: {selectedClient}
+                            </span>
+                          )}
+                        </div>
+                        <textarea
+                          className="search-input"
+                          value={quickUpdateText}
+                          onChange={e => setQuickUpdateText(e.target.value)}
+                          placeholder={selectedClient ? `Draft an update for ${selectedClient}…` : 'Select a client from the list, then draft your update…'}
+                          style={{ flex: 1, resize: 'none', padding: 12, fontFamily: 'Outfit', minHeight: 100 }}
+                        />
+                        <button
+                          className="btn btn-pink"
+                          style={{ alignSelf: 'flex-end' }}
+                          disabled={quickUpdateSending || !quickUpdateText.trim() || !selectedClient}
+                          onClick={async () => {
+                            if (!selectedClient || !quickUpdateText.trim()) return
+                            setQuickUpdateSending(true)
+                            const { data: { user } } = await supabase.auth.getUser()
+                            if (user) {
+                              const client = clients.find(c => c.name === selectedClient)
+                              await supabase.from('email_drafts').insert({
+                                user_id: user.id,
+                                client_id: (client as {client_id?: string})?.client_id ?? selectedClient,
+                                subject: `Quick Update — ${selectedClient}`,
+                                body: quickUpdateText,
+                                draft_type: 'quick_update',
+                                status: 'sent',
+                                sent_at: new Date().toISOString(),
+                              })
+                            }
+                            setQuickUpdateText('')
+                            setQuickUpdateSending(false)
+                            setShowToast(`Update sent to ${selectedClient}`)
+                            setTimeout(() => setShowToast(null), 3000)
+                          }}
+                        >
+                          {quickUpdateSending ? 'Sending…' : 'Send Update'}
+                        </button>
                       </div>
                     </div>
                   )}
                   {homeSubTab === 'notes' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' }}>Meeting Minutes & Notes</div>
-                        <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 10 }}>+ New Note</button>
+                    <div style={{ display: 'flex', gap: 0, flex: 1, minHeight: 320 }}>
+                      {/* Left: note list */}
+                      <div style={{ width: 200, flexShrink: 0, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ padding: '0 12px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Saved Notes</span>
+                          <button
+                            className="btn btn-ghost"
+                            style={{ padding: '3px 8px', fontSize: 10 }}
+                            onClick={() => { setNotesText(''); setActiveNoteId(null); setNotesSavedAt(null) }}
+                          >+ New</button>
+                        </div>
+                        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                          {savedNotes.length === 0 ? (
+                            <div style={{ padding: '10px 12px', fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic' }}>No saved notes yet</div>
+                          ) : savedNotes.map(note => {
+                            const firstLine = note.content.split('\n')[0]?.slice(0, 36) || 'Untitled note'
+                            const lineCount = note.content.split('\n').filter(Boolean).length
+                            const dateStr = new Date(note.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            const isActive = note.id === activeNoteId
+                            return (
+                              <div
+                                key={note.id}
+                                onClick={() => { setNotesText(note.content); setActiveNoteId(note.id); setNotesSavedAt(new Date(note.updated_at)) }}
+                                style={{ padding: '9px 12px', cursor: 'pointer', background: isActive ? 'rgba(255,46,191,0.08)' : 'transparent', borderLeft: isActive ? '2px solid var(--pink)' : '2px solid transparent', transition: 'background 0.15s' }}
+                              >
+                                <div style={{ fontSize: 12, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--text-1)' : 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{firstLine}</div>
+                                <div style={{ marginTop: 2, display: 'flex', gap: 6, alignItems: 'center' }}>
+                                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>{dateStr}</span>
+                                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>·</span>
+                                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>{lineCount} line{lineCount !== 1 ? 's' : ''}</span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
                       </div>
-                      <textarea className="search-input" value={notesText} onChange={(e) => setNotesText(e.target.value)} placeholder="Type your notes here. They will be auto-saved and analyzed by ADK agents..." style={{ flex: 1, resize: 'none', padding: 16, fontFamily: 'Outfit', lineHeight: 1.5 }}></textarea>
+
+                      {/* Right: editor */}
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingLeft: 16 }}>
+                        <textarea
+                          className="search-input"
+                          value={notesText}
+                          onChange={(e) => { setNotesText(e.target.value); setNotesSavedAt(null) }}
+                          placeholder="Start typing your meeting notes here...&#10;&#10;First line becomes the note title.&#10;Auto-saves after 2 seconds."
+                          style={{ flex: 1, resize: 'none', padding: 14, fontFamily: 'Outfit', lineHeight: 1.6, fontSize: 13 }}
+                        />
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+                          <span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)' }}>
+                            {notesSaving ? 'Saving…' : notesSavedAt ? `Saved ${notesSavedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` : activeNoteId ? 'Unsaved changes' : 'New note — not yet saved'}
+                          </span>
+                          <button
+                            className="btn btn-pink"
+                            style={{ fontSize: 11, padding: '6px 16px' }}
+                            disabled={notesSaving || !notesText.trim()}
+                            onClick={() => saveNote(true)}
+                          >
+                            {notesSaving ? 'Saving…' : 'Save Note'}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                   {homeSubTab === 'calendar' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
-                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' }}>Upcoming Events</div>
-                      <div style={{ display: 'flex', gap: 16 }}>
-                        <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderLeft: '3px solid var(--pink)', borderRadius: 'var(--r-md)', padding: 16, flex: 1 }}>
-                          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Q2 Strategy Review - Pinnacle Group</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 8 }}>Today, 2:00 PM - 3:30 PM</div>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <span className="atag atag-agent">Prep by AG-05</span>
-                            <span className="atag atag-default">Zoom</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' }}>Upcoming Events</div>
+                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>{calendarEvents.length} event{calendarEvents.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {calendarEvents.map(ev => (
+                          <div
+                            key={ev.id}
+                            style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderLeft: `3px solid ${ev.color}`, borderRadius: 'var(--r-md)', padding: '12px 16px', cursor: 'pointer' }}
+                            className="interactive-card"
+                            onClick={() => { setSelectedClient(ev.client); setActiveTab('clients') }}
+                          >
+                            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 3 }}>{ev.title}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 6 }}>{ev.start} — {ev.end}</div>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              {ev.prep && <span className="atag atag-agent">Prep by {ev.prep}</span>}
+                              <span className="atag atag-default">{ev.platform}</span>
+                            </div>
                           </div>
-                        </div>
-                        <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderLeft: '3px solid var(--indigo)', borderRadius: 'var(--r-md)', padding: 16, flex: 1 }}>
-                          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Tech Audit Kickoff - Meridian Capital</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 8 }}>Tomorrow, 10:00 AM - 11:00 AM</div>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <span className="atag atag-default">Teams</span>
-                          </div>
-                        </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -1806,11 +2530,28 @@ export default function Dashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
                 <div className="card">
-                  <div className="card-hd"><div className="card-hd-title"><div className="title-pip" />Active Agent Actions (Simulated Flow)</div></div>
+                  <div className="card-hd">
+                    <div className="card-hd-title"><div className="title-pip" />Active Agent Actions</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {queueEvents.length > 0
+                        ? <><div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 6px var(--green)' }}/><span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--green)' }}>LIVE · {queueEvents.length} events</span></>
+                        : <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>DEMO MODE</span>
+                      }
+                    </div>
+                  </div>
                   <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {(() => {
-                      const filteredFlow = MOCK_FLOW_ACTIONS.filter(act => 
-                        act.agent.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                      const liveFlow = queueEvents.length > 0
+                        ? queueEvents.map(e => ({
+                            agent:    e.agent_id,
+                            color:    'var(--pink-hi)',
+                            body:     typeof e.payload?.action_text === 'string' ? e.payload.action_text : JSON.stringify(e.payload),
+                            time:     new Date(e.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                            dotColor: 'var(--indigo)',
+                          }))
+                        : MOCK_FLOW_ACTIONS
+                      const filteredFlow = liveFlow.filter(act =>
+                        act.agent.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         act.body.toLowerCase().includes(searchQuery.toLowerCase())
                       );
                       if (filteredFlow.length === 0) {
@@ -1841,10 +2582,15 @@ export default function Dashboard() {
                       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </div>
                     <div style={{ textAlign: 'center', marginTop: 10 }}>
-                      <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 16 }}>ADK Orchestrator Secure</div>
-                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--green)', marginTop: 4 }}>● Connected to Gmail API</div>
-                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--green)', marginTop: 2 }}>● Connected to Calendar API</div>
-                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--green)', marginTop: 2 }}>● Next.js Dev Bypass Active</div>
+                      <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 16 }}>ADK Orchestrator</div>
+                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: mails !== MOCK_MAILS ? 'var(--green)' : 'var(--amber)', marginTop: 4 }}>
+                        {mails !== MOCK_MAILS ? '● Gmail API Connected' : '○ Gmail · Demo Mode'}
+                      </div>
+                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: calendarEvents !== MOCK_CALENDAR_EVENTS ? 'var(--green)' : 'var(--amber)', marginTop: 2 }}>
+                        {calendarEvents !== MOCK_CALENDAR_EVENTS ? '● Calendar API Connected' : '○ Calendar · Demo Mode'}
+                      </div>
+                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--green)', marginTop: 2 }}>● Supabase · {clients.length} clients synced</div>
+                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--green)', marginTop: 2 }}>● {agentsData.length} agents registered</div>
                     </div>
                   </div>
                 </div>
@@ -1875,7 +2621,7 @@ export default function Dashboard() {
                     />
                   </div>
                   <div style={{ overflowY: 'auto', flex: 1, maxHeight: 480 }}>
-                    {CLIENTS_DATA.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).map(c => {
+                    {clients.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).map(c => {
                       const statusClass = c.status === 'Accelerating' ? 'success-rate-badge' : c.status === 'On Track' ? 'badge-indigo' : c.status === 'Progressing' ? 'badge-violet' : c.status === 'At Risk' ? 'badge-amber' : 'badge-red'
                       return (
                         <div 
@@ -1883,7 +2629,11 @@ export default function Dashboard() {
                           className={`tab-list-item${selectedClient === c.name ? ' active' : ''}`}
                           onClick={() => {
                             setSelectedClient(c.name)
-                            setEmailDraftBody(`Hi ${c.name} team,\n\nI wanted to follow up on our recent milestone deliverables. Let's schedule a brief sync to align on next steps.\n\nBest,\nDemo Team`)
+                            setShowComposeFor(null)
+                            setShowDiagnosticsFor(null)
+                            const firstName = c.contact?.split(' ')[0] ?? c.name
+                            setComposeSubject(`Project Sync — ${c.name}`)
+                            setEmailDraftBody(`Hi ${firstName},\n\nI wanted to follow up on our recent project progress and ensure we're aligned on next steps.\n\nWould you be available for a brief sync this week?\n\nBest,\n${userName || 'Your consultant'}`)
                           }}
                         >
                           <div>
@@ -1901,7 +2651,7 @@ export default function Dashboard() {
                 </div>
 
                 {(() => {
-                  const client = CLIENTS_DATA.find(c => c.name === selectedClient) || CLIENTS_DATA[0]
+                  const client = clients.find(c => c.name === selectedClient) || clients[0]
                   const statusClass = client.status === 'Accelerating' ? 'success-rate-badge' : client.status === 'On Track' ? 'badge-indigo' : client.status === 'Progressing' ? 'badge-violet' : client.status === 'At Risk' ? 'badge-amber' : 'badge-red'
                   return (
                     <div className="detail-panel">
@@ -1957,62 +2707,163 @@ export default function Dashboard() {
                           if (client.status === 'Stalling') {
                             setActiveTab('stall_detection')
                           } else {
-                            window.open(`mailto:${client.email}?subject=Project Sync&body=${encodeURIComponent(emailDraftBody)}`, '_blank')
-                            setShowToast(`Draft email opened in Mail client for ${client.name}`)
-                            setTimeout(() => setShowToast(null), 3000)
+                            setShowDiagnosticsFor(null)
+                            setShowComposeFor(showComposeFor === client.name ? null : client.name)
                           }
                         }}>
-                          {client.status === 'Stalling' ? <><Icon.Zap /> Open Stall Dashboard</> : <><Icon.Mail /> Compose Outreach</>}
+                          {client.status === 'Stalling' ? <><Icon.Zap /> Open Stall Dashboard</> : <><Icon.Mail /> {showComposeFor === client.name ? 'Close Compose' : 'Compose Outreach'}</>}
                         </button>
                         <button className="btn btn-ghost" onClick={() => {
-                          setShowDiagnosticsFor(client.name);
-                          setShowToast(`Diagnostics loop initiated for ${client.name}...`);
-                          setTimeout(() => setShowToast(null), 3000)
-                        }}>Run Diagnostics</button>
+                          setShowComposeFor(null)
+                          setShowDiagnosticsFor(showDiagnosticsFor === client.name ? null : client.name)
+                        }}>
+                          {showDiagnosticsFor === client.name ? 'Close Diagnostics' : 'Run Diagnostics'}
+                        </button>
                       </div>
 
-                      {showDiagnosticsFor === client.name && (
+                      {/* Compose Outreach panel */}
+                      {showComposeFor === client.name && (
                         <div style={{ marginTop: 20, padding: 20, border: '1px solid var(--border)', borderRadius: 'var(--r-md)', background: 'var(--bg-inset)', animation: 'rise 0.4s ease both' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                            <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'Outfit', color: 'var(--text-1)' }}><span style={{ color: 'var(--pink)' }}>✦</span> Diagnostic Report: {client.name}</div>
-                            <button className="btn btn-ghost" onClick={() => setShowDiagnosticsFor(null)} style={{ padding: '4px 8px' }}><Icon.X /> Close</button>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                            <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'Outfit', color: 'var(--text-1)' }}><span style={{ color: 'var(--pink)' }}>✦</span> Compose Outreach — {client.name}</div>
+                            <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)' }}>To: {client.email}</div>
                           </div>
-                          
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-                            <div>
-                              <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', marginBottom: 8, textTransform: 'uppercase' }}>Behavioral Sentiment Trend</div>
-                              <div style={{ height: 120, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: 10, position: 'relative' }}>
-                                <svg viewBox="0 0 200 80" style={{ width: '100%', height: '100%' }}>
-                                  <path d="M 0,60 Q 50,40 100,50 T 200,20" fill="none" stroke="var(--pink)" strokeWidth="2" strokeLinecap="round" />
-                                  <circle cx="200" cy="20" r="4" fill="var(--pink)" />
-                                  <circle cx="100" cy="50" r="3" fill="var(--indigo)" />
-                                  <circle cx="0" cy="60" r="3" fill="var(--violet)" />
-                                </svg>
-                                <div style={{ position: 'absolute', bottom: 10, right: 10, fontSize: 10, color: 'var(--green)', fontFamily: 'JetBrains Mono', background: 'var(--bg-inset)', padding: '2px 4px', borderRadius: 4 }}><Icon.ArrowUpRight /> Trending Positive</div>
-                              </div>
-                            </div>
-                            <div>
-                              <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', marginBottom: 8, textTransform: 'uppercase' }}>Engagement Metrics</div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: 12, height: 120, justifyContent: 'center' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span>Email Responsiveness</span> <span style={{ color: 'var(--green)', fontWeight: 600 }}>High (2.4h avg)</span></div>
-                                <div style={{ height: 1, background: 'var(--border)' }} />
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span>Meeting Attendance</span> <span style={{ color: 'var(--amber)', fontWeight: 600 }}>75%</span></div>
-                                <div style={{ height: 1, background: 'var(--border)' }} />
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span>Scope Adherence</span> <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>90%</span></div>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', marginBottom: 8, textTransform: 'uppercase' }}>AI Executive Summary</div>
-                            <div style={{ fontSize: 12, lineHeight: 1.6, color: 'var(--text-2)', background: 'var(--bg-card)', padding: 12, borderRadius: 'var(--r-sm)', border: '1px solid var(--border)' }}>
-                              Client shows consistent engagement but meeting attendance has slightly declined over the last 3 weeks. Email responsiveness remains high, indicating strong asynchronous communication channels. 
-                              <br/><br/>
-                              <strong style={{ color: 'var(--text-1)' }}>Recommendation:</strong> Pre-schedule key check-ins 2 weeks in advance to lock in executive attendance. Leverage ADK patterns to ensure alignment.
-                            </div>
+                          <input
+                            value={composeSubject}
+                            onChange={e => setComposeSubject(e.target.value)}
+                            placeholder="Subject"
+                            style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '8px 12px', color: 'var(--text-1)', fontSize: 13, marginBottom: 10, boxSizing: 'border-box' }}
+                          />
+                          <textarea
+                            value={emailDraftBody}
+                            onChange={e => setEmailDraftBody(e.target.value)}
+                            rows={6}
+                            style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '10px 12px', color: 'var(--text-1)', fontSize: 13, resize: 'vertical', boxSizing: 'border-box' }}
+                          />
+                          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                            <button className="btn btn-pink" onClick={async () => {
+                              const { data: { user } } = await supabase.auth.getUser()
+                              if (!user || !emailDraftBody.trim()) return
+                              await supabase.from('email_drafts').insert({
+                                user_id: user.id,
+                                client_id: client.client_id ?? null,
+                                subject: composeSubject || `Outreach — ${client.name}`,
+                                body: emailDraftBody,
+                                draft_type: 'outreach',
+                                status: 'draft',
+                              })
+                              setShowToast(`Draft saved for ${client.name}`)
+                              setTimeout(() => setShowToast(null), 3000)
+                            }}><Icon.Save /> Save Draft</button>
+                            <button className="btn btn-ghost" onClick={async () => {
+                              const { data: { user } } = await supabase.auth.getUser()
+                              if (!user || !emailDraftBody.trim()) return
+                              await supabase.from('email_drafts').insert({
+                                user_id: user.id,
+                                client_id: client.client_id ?? null,
+                                subject: composeSubject || `Outreach — ${client.name}`,
+                                body: emailDraftBody,
+                                draft_type: 'outreach',
+                                status: 'sent',
+                                sent_at: new Date().toISOString(),
+                              })
+                              setShowComposeFor(null)
+                              setEmailDraftBody('')
+                              setShowToast(`Email sent to ${client.name}`)
+                              setTimeout(() => setShowToast(null), 3000)
+                            }}><Icon.Mail /> Send</button>
                           </div>
                         </div>
                       )}
+
+                      {/* Diagnostics panel */}
+                      {showDiagnosticsFor === client.name && (() => {
+                        const momentum = client.client_id ? (clientMomentum[client.client_id] ?? []) : []
+                        const darkDays = client.exec_dark_days ?? 0
+                        const emailLabel = darkDays === 0 ? 'High (same-day)' : darkDays <= 2 ? `High (${darkDays}d avg)` : darkDays <= 7 ? `Medium (${darkDays}d avg)` : `Low (${darkDays}d dark)`
+                        const emailColor = darkDays <= 2 ? 'var(--green)' : darkDays <= 7 ? 'var(--amber)' : 'var(--red)'
+                        const budgetDev = client.budget_deviation ?? 0
+                        const attendancePct = Math.max(0, Math.min(100, Math.round(100 + budgetDev * 0.8)))
+                        const attendanceColor = attendancePct >= 85 ? 'var(--green)' : attendancePct >= 65 ? 'var(--amber)' : 'var(--red)'
+                        const stallScore = client.stall_score ?? 0
+                        const adherencePct = Math.max(0, Math.min(100, Math.round(100 - stallScore * 3)))
+                        const adheranceColor = adherencePct >= 85 ? 'var(--text-1)' : adherencePct >= 65 ? 'var(--amber)' : 'var(--red)'
+
+                        // Build SVG sparkline from momentum data (or static fallback)
+                        let sparkPath = 'M 0,60 Q 50,40 100,50 T 200,20'
+                        let sparkPoints: {cx: number; cy: number}[] = [{ cx: 0, cy: 60 }, { cx: 100, cy: 50 }, { cx: 200, cy: 20 }]
+                        let trendLabel = 'Demo Data'
+                        let trendColor = 'var(--text-3)'
+                        if (momentum.length >= 2) {
+                          const scores = momentum.map(m => m.score)
+                          const minS = Math.min(...scores), maxS = Math.max(...scores)
+                          const range = maxS - minS || 1
+                          sparkPoints = momentum.map((m, i) => ({
+                            cx: Math.round((i / (momentum.length - 1)) * 200),
+                            cy: Math.round(70 - ((m.score - minS) / range) * 60),
+                          }))
+                          sparkPath = sparkPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.cx},${p.cy}`).join(' ')
+                          const last = scores[scores.length - 1]
+                          const prev = scores[scores.length - 2]
+                          trendLabel = last >= prev ? 'Trending Up' : 'Trending Down'
+                          trendColor = last >= prev ? 'var(--green)' : 'var(--red)'
+                        }
+
+                        const summaryText = [client.notes, client.alert_text].filter(Boolean).join(' · ')
+
+                        return (
+                          <div style={{ marginTop: 20, padding: 20, border: '1px solid var(--border)', borderRadius: 'var(--r-md)', background: 'var(--bg-inset)', animation: 'rise 0.4s ease both' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                              <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'Outfit', color: 'var(--text-1)' }}><span style={{ color: 'var(--pink)' }}>✦</span> Diagnostic Report: {client.name}</div>
+                              <button className="btn btn-ghost" onClick={() => setShowDiagnosticsFor(null)} style={{ padding: '4px 8px' }}><Icon.X /> Close</button>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                              <div>
+                                <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', marginBottom: 8, textTransform: 'uppercase' }}>Momentum Score Trend</div>
+                                <div style={{ height: 120, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: 10, position: 'relative' }}>
+                                  <svg viewBox="0 0 200 80" style={{ width: '100%', height: '100%' }}>
+                                    <path d={sparkPath} fill="none" stroke="var(--pink)" strokeWidth="2" strokeLinecap="round" />
+                                    {sparkPoints.map((p, i) => (
+                                      <circle key={i} cx={p.cx} cy={p.cy} r={i === sparkPoints.length - 1 ? 4 : 3} fill={i === sparkPoints.length - 1 ? 'var(--pink)' : 'var(--indigo)'} />
+                                    ))}
+                                  </svg>
+                                  <div style={{ position: 'absolute', bottom: 10, right: 10, fontSize: 10, color: trendColor, fontFamily: 'JetBrains Mono', background: 'var(--bg-inset)', padding: '2px 6px', borderRadius: 4 }}>{trendLabel}</div>
+                                  {momentum.length === 0 && (
+                                    <div style={{ position: 'absolute', top: 8, left: 10, fontSize: 9, color: 'var(--text-3)', fontFamily: 'JetBrains Mono' }}>demo · no history loaded</div>
+                                  )}
+                                </div>
+                              </div>
+                              <div>
+                                <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', marginBottom: 8, textTransform: 'uppercase' }}>Engagement Metrics</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: 12, height: 120, justifyContent: 'center' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span>Exec Responsiveness</span> <span style={{ color: emailColor, fontWeight: 600 }}>{emailLabel}</span></div>
+                                  <div style={{ height: 1, background: 'var(--border)' }} />
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span>Meeting Attendance</span> <span style={{ color: attendanceColor, fontWeight: 600 }}>{attendancePct}%</span></div>
+                                  <div style={{ height: 1, background: 'var(--border)' }} />
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span>Scope Adherence</span> <span style={{ color: adheranceColor, fontWeight: 600 }}>{adherencePct}%</span></div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', marginBottom: 8, textTransform: 'uppercase' }}>AI Executive Summary</div>
+                              <div style={{ fontSize: 12, lineHeight: 1.6, color: 'var(--text-2)', background: 'var(--bg-card)', padding: 12, borderRadius: 'var(--r-sm)', border: '1px solid var(--border)' }}>
+                                {summaryText || (
+                                  <>
+                                    Client shows consistent engagement but exec availability has slightly declined over recent weeks. Email responsiveness remains {darkDays <= 3 ? 'strong' : 'lower than optimal'}, suggesting {darkDays <= 3 ? 'healthy async communication' : 'a potential engagement gap'}.
+                                    <br/><br/>
+                                    <strong style={{ color: 'var(--text-1)' }}>Recommendation:</strong> {stallScore >= 6 ? 'Escalate engagement — stall risk is elevated. Pre-schedule key touchpoints immediately.' : 'Pre-schedule key check-ins 2 weeks in advance to lock in executive attendance.'}
+                                  </>
+                                )}
+                                {summaryText && client.alert_text && (
+                                  <><br/><br/><strong style={{ color: 'var(--amber)' }}>Alert:</strong> {client.alert_text}</>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })()}
                     </div>
                   )
                 })()}
@@ -2026,25 +2877,35 @@ export default function Dashboard() {
               <div className="page-head">
                 <div>
                   <div className="page-title">Engagement <span>Screener</span></div>
-                  <div className="page-sub">5 active mandates · live momentum scoring</div>
+                  <div className="page-sub">{engagementsData.length} active mandates · live momentum scoring</div>
                 </div>
               </div>
 
-              {/* Portfolio summary strip */}
-              <div style={{ display: 'flex', gap: 12 }}>
-                {[
-                  { label: 'TOTAL REVENUE', val: '$650K', color: 'var(--green)' },
-                  { label: 'AVG SCORE', val: '5.8', color: 'var(--text-1)' },
-                  { label: 'ON TRACK', val: '2', color: 'var(--green)' },
-                  { label: 'AT RISK / STALLING', val: '2', color: 'var(--red)' },
-                  { label: 'AVG DAYS ACTIVE', val: '69', color: 'var(--text-1)' },
-                ].map(s => (
-                  <div key={s.label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '10px 18px', display: 'flex', flexDirection: 'column', gap: 5, animation: 'rise 0.4s ease both' }}>
-                    <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.1em' }}>{s.label}</div>
-                    <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: 20, color: s.color, lineHeight: 1, letterSpacing: '-0.02em' }}>{s.val}</div>
+              {/* Portfolio summary strip — computed from live engagementsData */}
+              {(() => {
+                const totalRev  = engagementsData.reduce((s, e) => s + e.revenue, 0)
+                const avgScore  = engagementsData.length ? (engagementsData.reduce((s, e) => s + Number(e.score), 0) / engagementsData.length).toFixed(1) : '—'
+                const onTrack   = engagementsData.filter(e => e.health === 'On Track' || e.health === 'Progressing').length
+                const atRisk    = engagementsData.filter(e => e.health === 'At Risk' || e.health === 'Stalling').length
+                const avgDays   = engagementsData.length ? Math.round(engagementsData.reduce((s, e) => s + e.daysActive, 0) / engagementsData.length) : 0
+                const strip = [
+                  { label: 'TOTAL REVENUE',    val: `$${totalRev}K`,  color: 'var(--green)' },
+                  { label: 'AVG SCORE',        val: String(avgScore), color: 'var(--text-1)' },
+                  { label: 'ON TRACK',         val: String(onTrack),  color: 'var(--green)' },
+                  { label: 'AT RISK / STALLING', val: String(atRisk), color: 'var(--red)' },
+                  { label: 'AVG DAYS ACTIVE',  val: String(avgDays),  color: 'var(--text-1)' },
+                ]
+                return (
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    {strip.map(s => (
+                      <div key={s.label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '10px 18px', display: 'flex', flexDirection: 'column', gap: 5, animation: 'rise 0.4s ease both' }}>
+                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.1em' }}>{s.label}</div>
+                        <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: 20, color: s.color, lineHeight: 1, letterSpacing: '-0.02em' }}>{s.val}</div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )
+              })()}
 
               {/* Screener table */}
               <div className="card" style={{ overflowX: 'auto' }}>
@@ -2062,7 +2923,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Rows */}
-                  {ENGAGEMENTS_DATA.map((e) => {
+                  {engagementsData.map((e) => {
                     const isOpen = expandedEngagement === e.client
                     const hColor = e.health === 'On Track' ? 'var(--green)' : e.health === 'Progressing' ? 'var(--indigo)' : e.health === 'At Risk' ? 'var(--amber)' : 'var(--red)'
                     const hBadge = e.health === 'On Track' ? 'success-rate-badge' : e.health === 'Progressing' ? 'badge-indigo' : e.health === 'At Risk' ? 'badge-amber' : 'badge-red'
@@ -2225,28 +3086,28 @@ export default function Dashboard() {
               </div>
 
               <div className="card">
-                <div className="card-hd"><div className="card-hd-title"><div className="title-pip" />Active Recommendations</div></div>
+                <div className="card-hd">
+                  <div className="card-hd-title"><div className="title-pip" />Active Recommendations</div>
+                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)' }}>
+                    {actionItems.filter(a => !a.completed).length} pending · {actionItems.filter(a => a.completed).length} resolved
+                  </div>
+                </div>
                 <div className="action-list">
-                  {[
-                    { id: 'act-1', client: 'Halcyon Systems', desc: 'Stall score 9.1 — 3 missed milestones, exec dark 7 wks. Immediate escalation required.', agent: 'stall_detection', date: 'Due Jun 9', owner: 'Partner lead', urgency: 'crit', badge: 'Critical' },
-                    { id: 'act-2', client: 'Drift Capital', desc: 'Billing −40% vs contract. Scope creep with no change order — revenue at risk.', agent: 'stall_detection', date: 'Due Jun 8', owner: 'Account mgr', urgency: 'crit', badge: 'Critical' },
-                    { id: 'act-3', client: 'Vantage Partners', desc: 'Budget cycle opens Jul 1. Value chain proposal window — 3 qualified service expansions identified.', agent: 'value_chain', date: 'Due Jun 20', owner: 'Principal', urgency: 'high', badge: 'High' },
-                    { id: 'act-4', client: 'Corestone Infra', desc: 'No exec contact in 28 days. Relationship health score dropped 2.1 pts. Re-engage now.', agent: 'relationship', date: 'Due Jun 12', owner: 'Director', urgency: 'high', badge: 'High' }
-                  ].map((a) => {
-                    const isCompleted = completedActions.includes(a.id)
+                  {actionItems.map((a) => {
+                    const urgencyLabel = a.urgency === 'crit' ? 'Critical' : a.urgency === 'high' ? 'High' : a.urgency === 'medium' ? 'Medium' : 'Low'
+                    const dueFmt = a.due_date ? 'Due ' + new Date(a.due_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+                    const isStall = a.source_agent === 'stall_detection'
                     return (
-                      <div key={a.id} className={`action-item urg-${a.urgency}`} style={{ opacity: isCompleted ? 0.4 : 1, transition: 'opacity 0.2s' }}>
+                      <div key={a.id} className={`action-item urg-${a.urgency}`} style={{ opacity: a.completed ? 0.4 : 1, transition: 'opacity 0.2s' }}>
                         <div className="action-bar" />
                         <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={isCompleted}
+                          <input
+                            type="checkbox"
+                            checked={a.completed}
                             onChange={() => {
-                              if (isCompleted) {
-                                setCompletedActions(completedActions.filter(id => id !== a.id))
-                              } else {
-                                setCompletedActions([...completedActions, a.id])
-                                setShowToast(`Action for ${a.client} marked as resolved`)
+                              toggleActionItem(a.id, !a.completed)
+                              if (!a.completed) {
+                                setShowToast(`Action for ${a.client_name} marked as resolved`)
                                 setTimeout(() => setShowToast(null), 3000)
                               }
                             }}
@@ -2254,29 +3115,37 @@ export default function Dashboard() {
                           />
                         </div>
                         <div className="action-body">
-                          <div className="action-client-name" style={{ textDecoration: isCompleted ? 'line-through' : 'none' }}>{a.client}</div>
-                          <div className="action-desc">{a.desc}</div>
+                          <div className="action-client-name" style={{ textDecoration: a.completed ? 'line-through' : 'none' }}>{a.client_name}</div>
+                          <div className="action-desc">{a.description}</div>
                           <div className="action-tags">
-                            <span className="atag atag-agent">{a.agent}</span>
-                            <span className="atag atag-date">{a.date}</span>
-                            <span className="atag atag-default">{a.owner}</span>
+                            <span className="atag atag-agent">{a.source_agent}</span>
+                            {dueFmt && <span className="atag atag-date">{dueFmt}</span>}
+                            {a.owner && <span className="atag atag-default">{a.owner}</span>}
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', paddingRight: 20, gap: 8 }}>
-                          {!isCompleted && (
+                          {!a.completed && (
                             <button className="btn btn-ghost" onClick={() => {
-                               setShowToast(`Action automatically delegated to ${a.agent}. Progress tracking started.`);
-                               setCompletedActions([...completedActions, a.id]);
-                               setTimeout(() => setShowToast(null), 3000);
+                              toggleActionItem(a.id, true)
+                              setShowToast(`Delegated to ${a.source_agent} agent. Tracking started.`)
+                              setTimeout(() => setShowToast(null), 3000)
                             }} style={{ padding: '5px 10px', fontSize: 10 }}>
                               Delegate to Agent
                             </button>
                           )}
-                          {!isCompleted && a.client === 'Halcyon Systems' && (
+                          {!a.completed && isStall && (
                             <button className="btn btn-pink" onClick={() => setActiveTab('stall_detection')} style={{ padding: '5px 10px', fontSize: 10 }}>
                               Escalate
                             </button>
                           )}
+                          {a.completed && a.completed_at && (
+                            <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--green)' }}>
+                              ✓ {new Date(a.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ paddingRight: 20 }}>
+                          <span className={a.urgency === 'crit' ? 'badge-red' : a.urgency === 'high' ? 'badge-amber' : 'badge-indigo'}>{urgencyLabel}</span>
                         </div>
                       </div>
                     )
@@ -2292,7 +3161,7 @@ export default function Dashboard() {
               <div className="page-head">
                 <div>
                   <div className="page-title">Agent <span>Workflow</span></div>
-                  <div className="page-sub">Interactive downstream diagram of active Gemini agents</div>
+                  <div className="page-sub">{agentsData.length} active agents · {queueEvents.length > 0 ? `${queueEvents.length} live events` : 'awaiting first run'}</div>
                 </div>
               </div>
 
@@ -2342,7 +3211,7 @@ export default function Dashboard() {
 
                       {/* Nodes — regular nw=145 nh=58, main nw=165 nh=68 */}
                       {WORKFLOW_NODES.map(node => {
-                        const agent = AGENTS_DATA.find(a => a.id === node.id)
+                        const agent = agentsData.find(a => a.id === node.id)
                         const isSelected = selectedAgent === node.id
                         const statusColor = agent?.status === 'Alerting' ? '#EF4444' : agent?.status === 'Analyzing' ? '#F59E0B' : '#22C55E'
                         const layerColor = node.col === 'source' ? '#818CF8'
@@ -2425,7 +3294,7 @@ export default function Dashboard() {
                 </div>
 
                 {(() => {
-                  const agent = AGENTS_DATA.find(a => a.id === selectedAgent) || AGENTS_DATA[0]
+                  const agent = agentsData.find(a => a.id === selectedAgent) || agentsData[0]
                   return (
                     <div className="detail-panel">
                       <div>
@@ -2433,6 +3302,11 @@ export default function Dashboard() {
                           <div>
                             <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Outfit' }}>{agent.id}</div>
                             <div style={{ fontSize: 14, color: 'var(--text-1)', fontWeight: 600, marginTop: 2 }}>{agent.name}</div>
+                            {agent.updatedAt && (
+                              <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', marginTop: 4 }}>
+                                Last active {new Date(agent.updatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                              </div>
+                            )}
                           </div>
                           <span className={agent.status === 'Alerting' ? 'badge-red' : agent.status === 'Analyzing' ? 'badge-amber' : 'success-rate-badge'} style={{ marginTop: 4 }}>
                             {agent.status}
@@ -2457,31 +3331,61 @@ export default function Dashboard() {
                       </div>
 
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, textTransform: 'uppercase', color: 'var(--text-3)', letterSpacing: '0.08em', marginBottom: 8 }}>Read/Write Events Log</div>
-                        <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 16, fontFamily: 'JetBrains Mono', fontSize: 11, color: 'var(--text-2)', lineHeight: 1.5, overflowY: 'auto', flex: 1 }}>
-                          <div><span style={{ color: 'var(--text-3)' }}>[05:12:08]</span> <span style={{ color: 'var(--indigo)' }}>READ</span> System trigger initialized loop...</div>
-                          <div><span style={{ color: 'var(--text-3)' }}>[05:12:09]</span> <span style={{ color: 'var(--indigo)' }}>READ</span> Ingested data from stream buffer...</div>
-                          <div><span style={{ color: 'var(--text-3)' }}>[05:12:10]</span> <span style={{ color: 'var(--indigo)' }}>READ</span> Processing pattern matching algorithms...</div>
-                          {agent.status === 'Alerting' ? (
-                            <>
-                              <div style={{ color: 'var(--red)' }}><span style={{ color: 'var(--text-3)' }}>[05:12:12]</span> <span>WRITE</span> ALERT: Matching anomaly threshold exceeded.</div>
-                              <div style={{ color: 'var(--red)' }}><span style={{ color: 'var(--text-3)' }}>[05:12:13]</span> <span>WRITE</span> Emitting high-priority flag to orchestrator.</div>
-                              <div style={{ color: 'var(--red)' }}><span style={{ color: 'var(--text-3)' }}>[05:12:14]</span> <span>WRITE</span> Updating client risk score: +2.4 points.</div>
-                              <div><span style={{ color: 'var(--text-3)' }}>[05:12:15]</span> <span style={{ color: 'var(--pink-hi)' }}>WRITE</span> Pushed action item to global queue.</div>
-                            </>
-                          ) : agent.status === 'Analyzing' ? (
-                            <>
-                              <div><span style={{ color: 'var(--text-3)' }}>[05:12:12]</span> <span style={{ color: 'var(--indigo)' }}>READ</span> Parsing entity sentiment parameters...</div>
-                              <div><span style={{ color: 'var(--text-3)' }}>[05:12:14]</span> <span style={{ color: 'var(--indigo)' }}>READ</span> Benchmarking deliverables against baseline...</div>
-                              <div style={{ color: 'var(--amber)' }}><span style={{ color: 'var(--text-3)' }}>[05:12:15]</span> <span>WRITE</span> Partial mismatch detected. Flagging for review.</div>
-                            </>
-                          ) : (
-                            <>
-                              <div><span style={{ color: 'var(--text-3)' }}>[05:12:12]</span> <span style={{ color: 'var(--indigo)' }}>READ</span> Processed 14 continuous events.</div>
-                              <div><span style={{ color: 'var(--text-3)' }}>[05:12:14]</span> <span style={{ color: 'var(--indigo)' }}>READ</span> No anomalies detected in current window.</div>
-                              <div style={{ color: 'var(--green)' }}><span style={{ color: 'var(--text-3)' }}>[05:12:15]</span> <span>WRITE</span> Logged success status. Awaiting next cycle.</div>
-                            </>
-                          )}
+                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, textTransform: 'uppercase', color: 'var(--text-3)', letterSpacing: '0.08em', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Read/Write Events Log</span>
+                          {queueEvents.filter(e => e.agent_id === agent.id).length > 0
+                            ? <span style={{ color: 'var(--green)' }}>● {queueEvents.filter(e => e.agent_id === agent.id).length} live</span>
+                            : <span style={{ color: 'var(--text-3)' }}>demo mode</span>
+                          }
+                        </div>
+                        <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 16, fontFamily: 'JetBrains Mono', fontSize: 11, color: 'var(--text-2)', lineHeight: 1.8, overflowY: 'auto', flex: 1 }}>
+                          {(() => {
+                            const agentEvents = queueEvents.filter(e => e.agent_id === agent.id)
+                            const ts = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+                            const baseTs = agent.updatedAt ? ts(agent.updatedAt) : '--:--:--'
+
+                            if (agentEvents.length > 0) {
+                              return agentEvents.slice(0, 30).map(ev => {
+                                const msg = typeof ev.payload?.action_text === 'string' ? ev.payload.action_text
+                                  : typeof ev.payload?.message === 'string' ? ev.payload.message
+                                  : JSON.stringify(ev.payload)
+                                const evColor = ev.event_type === 'alert' ? 'var(--red)' : ev.event_type === 'write' ? 'var(--pink-hi)' : 'var(--indigo)'
+                                const label = ev.event_type === 'alert' ? 'ALERT' : ev.event_type === 'write' ? 'WRITE' : 'READ'
+                                return (
+                                  <div key={ev.id}>
+                                    <span style={{ color: 'var(--text-3)' }}>[{ts(ev.created_at)}]</span>{' '}
+                                    <span style={{ color: evColor }}>{label}</span>{' '}
+                                    {msg}
+                                  </div>
+                                )
+                              })
+                            }
+
+                            // Fallback — generic log shaped to this agent's actual status and lastAction
+                            return (
+                              <>
+                                <div><span style={{ color: 'var(--text-3)' }}>[{baseTs}]</span> <span style={{ color: 'var(--indigo)' }}>READ</span> System trigger initialized loop...</div>
+                                <div><span style={{ color: 'var(--text-3)' }}>[{baseTs}]</span> <span style={{ color: 'var(--indigo)' }}>READ</span> Ingested data from stream buffer...</div>
+                                {agent.status === 'Alerting' ? (
+                                  <>
+                                    <div style={{ color: 'var(--red)' }}><span style={{ color: 'var(--text-3)' }}>[{baseTs}]</span> <span>WRITE</span> ALERT: {agent.lastAction}</div>
+                                    <div style={{ color: 'var(--red)' }}><span style={{ color: 'var(--text-3)' }}>[{baseTs}]</span> <span>WRITE</span> Emitting high-priority flag to orchestrator.</div>
+                                    <div><span style={{ color: 'var(--text-3)' }}>[{baseTs}]</span> <span style={{ color: 'var(--pink-hi)' }}>WRITE</span> Pushed action item to global queue.</div>
+                                  </>
+                                ) : agent.status === 'Analyzing' ? (
+                                  <>
+                                    <div><span style={{ color: 'var(--text-3)' }}>[{baseTs}]</span> <span style={{ color: 'var(--indigo)' }}>READ</span> {agent.lastAction}</div>
+                                    <div style={{ color: 'var(--amber)' }}><span style={{ color: 'var(--text-3)' }}>[{baseTs}]</span> <span>WRITE</span> Partial mismatch detected. Flagging for review.</div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div><span style={{ color: 'var(--text-3)' }}>[{baseTs}]</span> <span style={{ color: 'var(--indigo)' }}>READ</span> {agent.lastAction}</div>
+                                    <div style={{ color: 'var(--green)' }}><span style={{ color: 'var(--text-3)' }}>[{baseTs}]</span> <span>WRITE</span> Logged success status. Awaiting next cycle.</div>
+                                  </>
+                                )}
+                              </>
+                            )
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -2506,7 +3410,7 @@ export default function Dashboard() {
                   animation: 'rise 0.2s ease'
                 }}>
                   {(() => {
-                    const ha = AGENTS_DATA.find(a => a.id === hoveredAgent)!;
+                    const ha = agentsData.find(a => a.id === hoveredAgent)!;
                     return (
                       <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -2527,7 +3431,31 @@ export default function Dashboard() {
           )}
 
           {/* STALL DETECTION TAB */}
-          {activeTab === 'stall_detection' && (
+          {activeTab === 'stall_detection' && (() => {
+            // Compute critical client — live from clients state, fallback to Halcyon demo
+            const critClient = [...clients]
+              .filter(c => c.status === 'Stalling' || c.status === 'At Risk')
+              .sort((a, b) => {
+                const sa = a.stall_score ?? STALL_DEMO[a.name]?.stall_score ?? 0
+                const sb = b.stall_score ?? STALL_DEMO[b.name]?.stall_score ?? 0
+                return sb - sa
+              })[0] ?? clients.find(c => c.name === 'Halcyon Systems') ?? clients[0]
+            const critDemo = STALL_DEMO[critClient?.name ?? ''] ?? STALL_DEMO['Halcyon Systems']
+            const critStallScore = critClient?.stall_score ?? critDemo.stall_score
+            const critExecDark = critClient?.exec_dark_days ?? critDemo.exec_dark_days
+            const critScoreDelta = critClient?.score_delta ?? critDemo.score_delta
+            const critExecLabel = critClient?.exec_cadence_label ?? critDemo.exec_cadence_label
+            const critTicker = (critClient as {ticker?: string})?.ticker ?? critClient?.name?.slice(0,3).toUpperCase() ?? 'HCS'
+            const critEngagement = engagementsData.find(e => e.client === critClient?.name)
+            const missedMilestones = critEngagement?.log?.filter((l: {type: string}) => l.type === 'risk').length ?? 3
+            const ag03 = agentsData.find(a => a.id === 'AG-03')
+            const ag03Ts = (ag03 as {updatedAt?: string})?.updatedAt
+              ? new Date((ag03 as {updatedAt?: string}).updatedAt!).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' ·')
+              : '06/07 · 07:31'
+            const ag03Status = ag03?.status ?? 'Alerting'
+            const critCount = actionItems.filter(a => !a.completed && a.urgency === 'crit').length || 2
+
+            return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'rise 0.4s ease both' }}>
               <div className="page-head">
                 <div>
@@ -2536,8 +3464,8 @@ export default function Dashboard() {
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--red-dim)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 'var(--r-sm)', padding: '6px 12px' }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--red)', boxShadow: '0 0 6px var(--red)' }}/>
-                    <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--red)' }}>2 CRITICAL · AG-03 ACTIVE</span>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--red)', boxShadow: '0 0 6px var(--red)', animation: 'dot-pulse 1.5s ease-in-out infinite' }}/>
+                    <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--red)' }}>{critCount} CRITICAL · AG-03 {ag03Status.toUpperCase()}</span>
                   </div>
                 </div>
               </div>
@@ -2545,15 +3473,15 @@ export default function Dashboard() {
               {/* Insight chain pipeline */}
               <div className="card" style={{ padding: '16px 20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <div className="card-hd-title" style={{ margin: 0 }}><div className="title-pip" style={{ background: 'var(--pink)' }}/>Halcyon Systems · Insight Chain</div>
-                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>AG-03 triggered 06/07 · 07:31</div>
+                  <div className="card-hd-title" style={{ margin: 0 }}><div className="title-pip" style={{ background: 'var(--pink)' }}/>{critClient?.name ?? 'Halcyon Systems'} · Insight Chain</div>
+                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>AG-03 triggered {ag03Ts}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0 }}>
                   {[
                     { n: '1', label: 'Gmail Synth', agent: 'AG-10', detail: '4 delay-language emails', color: 'var(--indigo)', layer: 'DATA SOURCE' },
-                    { n: '2', label: 'Exec Gap', agent: 'AG-02', detail: 'CTO dark 49 days', color: 'var(--amber)', layer: 'DATA SOURCE' },
-                    { n: '3', label: 'Rel. Scorer', agent: 'AG-07', detail: 'Score −3.2 pts / 30d', color: 'var(--violet)', layer: 'SPECIALIST' },
-                    { n: '4', label: 'Stall Detect', agent: 'AG-03', detail: 'Stall score 9.1 / 10', color: 'var(--red)', layer: 'SPECIALIST' },
+                    { n: '2', label: 'Exec Gap', agent: 'AG-02', detail: `${critExecLabel === 'Active' ? 'Exec engaged' : `CTO dark ${critExecDark}d`}`, color: 'var(--amber)', layer: 'DATA SOURCE' },
+                    { n: '3', label: 'Rel. Scorer', agent: 'AG-07', detail: `Score ${critScoreDelta >= 0 ? '+' : ''}${Number(critScoreDelta).toFixed(1)} pts / 30d`, color: 'var(--violet)', layer: 'SPECIALIST' },
+                    { n: '4', label: 'Stall Detect', agent: 'AG-03', detail: `Stall score ${Number(critStallScore).toFixed(1)} / 10`, color: 'var(--red)', layer: 'SPECIALIST' },
                     { n: '5', label: 'Momentum Orch', agent: 'AG-04', detail: 'Escalation threshold met', color: 'var(--pink)', layer: 'ORCHESTRATOR' },
                     { n: '6', label: 'Pattern Library', agent: 'AG-11', detail: 'Matched: Exec Bridge', color: 'var(--violet)', layer: 'ORCHESTRATOR' },
                     { n: '7', label: 'Defense Play', agent: 'AG-09', detail: 'Play #1 queued', color: 'var(--green)', layer: 'ACTION' },
@@ -2579,36 +3507,47 @@ export default function Dashboard() {
               <div className="card">
                 <div className="card-hd">
                   <div className="card-hd-title"><div className="title-pip" style={{ background: 'var(--red)' }}/>Account Stall Risk Matrix</div>
-                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>AG-03 · computed 2 min ago</div>
+                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>
+                    AG-03 · {ag03Ts ? `last run ${ag03Ts}` : 'computed 2 min ago'}
+                  </div>
                 </div>
                 <div style={{ padding: '0 0 4px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '160px 96px 108px 116px 122px 116px 1fr', padding: '8px 16px', borderBottom: '1px solid var(--border)', fontFamily: 'JetBrains Mono', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em' }}>
                     <div>CLIENT</div><div>STALL SCORE</div><div>EXEC CADENCE</div><div>BUDGET HEALTH</div><div>REL. SCORE DELTA</div><div>LAST CONTACT</div><div>STATUS</div>
                   </div>
-                  {[
-                    { ticker: 'HCS', client: 'Halcyon Systems',  score: 9.1, exec: 'Dark 49d',  budget: '−22%', relDelta: '−3.2 pts', contact: '49 days',  status: 'Stalling',  sc: 'var(--red)' },
-                    { ticker: 'DRC', client: 'Drift Capital',    score: 7.8, exec: 'Evasive',   budget: '−40%', relDelta: '−2.8 pts', contact: '6 days',   status: 'Stalling',  sc: 'var(--red)' },
-                    { ticker: 'VTG', client: 'Vantage Partners', score: 5.4, exec: 'Slowing',   budget: '−8%',  relDelta: '−0.9 pts', contact: '12 days',  status: 'At Risk',   sc: 'var(--amber)' },
-                    { ticker: 'COR', client: 'Corestone Infra',  score: 3.6, exec: 'Dark 28d',  budget: '−3%',  relDelta: '−2.1 pts', contact: '4 days',   status: 'Monitor',   sc: 'var(--indigo)' },
-                    { ticker: 'MRC', client: 'Meridian Capital', score: 1.4, exec: 'Active',    budget: '+2%',  relDelta: '+0.4 pts', contact: '2 days',   status: 'Healthy',   sc: 'var(--green)' },
-                    { ticker: 'PNG', client: 'Pinnacle Group',   score: 0.8, exec: 'Active',    budget: '+5%',  relDelta: '+1.1 pts', contact: 'Today',    status: 'Healthy',   sc: 'var(--green)' },
-                  ].map(r => (
-                    <div key={r.ticker} style={{ display: 'grid', gridTemplateColumns: '160px 96px 108px 116px 122px 116px 1fr', padding: '9px 16px', borderBottom: '1px solid var(--border)', alignItems: 'center', background: r.status === 'Stalling' ? 'rgba(239,68,68,0.03)' : 'transparent' }}>
-                      <div>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{r.ticker}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{r.client}</div>
+                  {[...clients].sort((a, b) => {
+                    const sa = a.stall_score ?? STALL_DEMO[a.name]?.stall_score ?? 0
+                    const sb = b.stall_score ?? STALL_DEMO[b.name]?.stall_score ?? 0
+                    return sb - sa
+                  }).map(c => {
+                    const demo = STALL_DEMO[c.name] ?? { stall_score: 0, exec_cadence_label: 'Active', budget_deviation: 0, score_delta: 0, exec_dark_days: 0 }
+                    const stallScore = c.stall_score ?? demo.stall_score
+                    const execLabel = c.exec_cadence_label ?? demo.exec_cadence_label
+                    const budgetDev = c.budget_deviation ?? demo.budget_deviation
+                    const relDelta  = c.score_delta ?? demo.score_delta
+                    const darkDays  = c.exec_dark_days ?? demo.exec_dark_days
+                    const ticker = (c as {ticker?: string}).ticker ?? c.name.slice(0,3).toUpperCase()
+                    const sc = c.status === 'Stalling' ? 'var(--red)' : c.status === 'At Risk' ? 'var(--amber)' : c.status === 'Progressing' ? 'var(--indigo)' : 'var(--green)'
+                    const stallLabel = c.status === 'Stalling' ? 'Stalling' : c.status === 'At Risk' ? 'At Risk' : c.status === 'Progressing' ? 'Monitor' : 'Healthy'
+                    return (
+                      <div key={ticker} style={{ display: 'grid', gridTemplateColumns: '160px 96px 108px 116px 122px 116px 1fr', padding: '9px 16px', borderBottom: '1px solid var(--border)', alignItems: 'center', background: c.status === 'Stalling' ? 'rgba(239,68,68,0.03)' : 'transparent', cursor: 'pointer' }}
+                        onClick={() => { setSelectedClient(c.name); setActiveTab('clients') }}>
+                        <div>
+                          <div style={{ fontFamily: 'JetBrains Mono', fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{ticker}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{c.name}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+                          <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 700, fontSize: 22, color: sc, lineHeight: 1 }}>{Number(stallScore).toFixed(1)}</span>
+                          <span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)' }}>/10</span>
+                        </div>
+                        <div style={{ fontFamily: 'Outfit', fontSize: 13, color: execLabel.startsWith('Dark') || execLabel === 'Evasive' ? 'var(--red)' : execLabel === 'Slowing' ? 'var(--amber)' : 'var(--text-2)' }}>{execLabel}</div>
+                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 13, color: budgetDev >= 0 ? 'var(--green)' : 'var(--red)' }}>{budgetDev >= 0 ? '+' : ''}{budgetDev}%</div>
+                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 13, color: relDelta >= 0 ? 'var(--green)' : 'var(--red)' }}>{relDelta >= 0 ? '+' : ''}{Number(relDelta).toFixed(1)} pts</div>
+                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 13, color: 'var(--text-3)' }}>{darkDays === 0 ? 'Today' : `${darkDays}d ago`}</div>
+                        <div><span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, padding: '3px 8px', borderRadius: 4, background: sc + '1A', color: sc, border: `1px solid ${sc}44` }}>{stallLabel}</span></div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-                        <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 700, fontSize: 22, color: r.sc, lineHeight: 1 }}>{r.score}</span>
-                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)' }}>/10</span>
-                      </div>
-                      <div style={{ fontFamily: 'Outfit', fontSize: 13, color: r.exec.startsWith('Dark') ? 'var(--red)' : r.exec === 'Evasive' ? 'var(--red)' : r.exec === 'Slowing' ? 'var(--amber)' : 'var(--text-2)' }}>{r.exec}</div>
-                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 13, color: r.budget.startsWith('+') ? 'var(--green)' : 'var(--red)' }}>{r.budget}</div>
-                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 13, color: r.relDelta.startsWith('+') ? 'var(--green)' : 'var(--red)' }}>{r.relDelta}</div>
-                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 13, color: 'var(--text-3)' }}>{r.contact}</div>
-                      <div><span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, padding: '3px 8px', borderRadius: 4, background: r.sc + '1A', color: r.sc, border: `1px solid ${r.sc}44` }}>{r.status}</span></div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 
@@ -2616,30 +3555,45 @@ export default function Dashboard() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <div className="card" style={{ padding: 20 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--red)', boxShadow: '0 0 8px var(--red)' }}/>
-                    <div style={{ fontFamily: 'Outfit', fontSize: 16, fontWeight: 700, color: 'var(--text-1)' }}>Halcyon Systems <span style={{ color: 'var(--text-3)', fontWeight: 400, fontSize: 12 }}>HCS</span></div>
-                    <span style={{ marginLeft: 'auto', fontFamily: 'JetBrains Mono', fontSize: 9, padding: '3px 8px', borderRadius: 4, background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.3)' }}>STALLING</span>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--red)', boxShadow: '0 0 8px var(--red)', animation: 'dot-pulse 1.5s ease-in-out infinite' }}/>
+                    <div style={{ fontFamily: 'Outfit', fontSize: 16, fontWeight: 700, color: 'var(--text-1)' }}>
+                      {critClient?.name ?? 'Halcyon Systems'} <span style={{ color: 'var(--text-3)', fontWeight: 400, fontSize: 12 }}>{critTicker}</span>
+                    </div>
+                    <span style={{ marginLeft: 'auto', fontFamily: 'JetBrains Mono', fontSize: 9, padding: '3px 8px', borderRadius: 4, background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                      {(critClient?.status ?? 'Stalling').toUpperCase()}
+                    </span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <div style={{ display: 'flex', gap: 12 }}>
                       <div style={{ flex: 1, background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '10px 14px' }}>
                         <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', marginBottom: 4 }}>STALL SCORE</div>
-                        <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: 28, color: 'var(--red)', lineHeight: 1 }}>9.1<span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 400 }}>/10</span></div>
+                        <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: 28, color: 'var(--red)', lineHeight: 1 }}>
+                          {Number(critStallScore).toFixed(1)}<span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 400 }}>/10</span>
+                        </div>
                       </div>
                       <div style={{ flex: 1, background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '10px 14px' }}>
                         <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', marginBottom: 4 }}>EXEC DARK</div>
-                        <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: 28, color: 'var(--amber)', lineHeight: 1 }}>49<span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 400 }}>d</span></div>
+                        <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: 28, color: critExecDark > 14 ? 'var(--red)' : 'var(--amber)', lineHeight: 1 }}>
+                          {critExecDark}<span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 400 }}>d</span>
+                        </div>
                       </div>
                       <div style={{ flex: 1, background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '10px 14px' }}>
                         <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', marginBottom: 4 }}>MILESTONES</div>
-                        <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: 28, color: 'var(--red)', lineHeight: 1 }}>3<span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 400 }}> missed</span></div>
+                        <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: 28, color: 'var(--red)', lineHeight: 1 }}>
+                          {missedMilestones}<span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 400 }}> missed</span>
+                        </div>
                       </div>
                     </div>
                     <div>
                       <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', marginBottom: 6 }}>FLAGGED COMMUNICATION · AG-10</div>
                       <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderLeft: '3px solid var(--red)', borderRadius: 'var(--r-sm)', padding: '10px 14px', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5 }}>
-                        &quot;...we might need to <span style={{ color: 'var(--red)', fontWeight: 600 }}>push the stakeholder steering review meetings to late next month</span>.&quot;
-                        <div style={{ marginTop: 6, fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>Greg House (CTO) · Jun 01</div>
+                        {critEngagement?.log?.[0] ? (
+                          <>&quot;...<span style={{ color: 'var(--red)', fontWeight: 600 }}>{critEngagement.log[0].event}</span>&quot;
+                          <div style={{ marginTop: 6, fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>{critClient?.contact ?? 'Exec contact'} · {critEngagement.log[0].date}</div></>
+                        ) : (
+                          <>&quot;...we might need to <span style={{ color: 'var(--red)', fontWeight: 600 }}>push the stakeholder steering review meetings to late next month</span>.&quot;
+                          <div style={{ marginTop: 6, fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>{critClient?.contact ?? 'Greg House (CTO)'} · Jun 01</div></>
+                        )}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: 'var(--pink-dim)', border: '1px solid rgba(255,46,191,0.2)', borderRadius: 'var(--r-sm)', padding: '10px 14px' }}>
@@ -2661,7 +3615,7 @@ export default function Dashboard() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div>
                       <label style={{ fontSize: 9, color: 'var(--text-3)', fontFamily: 'JetBrains Mono', letterSpacing: '0.05em' }}>EMAIL SUBJECT</label>
-                      <input type="text" className="search-input" value="Project Alignment & Roadmap Steering Sync" readOnly style={{ width: '100%', marginTop: 4 }}/>
+                      <input type="text" className="search-input" value={`${critClient?.name ?? 'Halcyon Systems'} — Project Alignment & Roadmap Steering Sync`} readOnly style={{ width: '100%', marginTop: 4 }}/>
                     </div>
                     <div>
                       <label style={{ fontSize: 9, color: 'var(--text-3)', fontFamily: 'JetBrains Mono', letterSpacing: '0.05em' }}>EMAIL BODY</label>
@@ -2684,7 +3638,7 @@ export default function Dashboard() {
                           setIsSendingEmail(true)
                           setTimeout(() => {
                             setIsSendingEmail(false)
-                            setShowToast('Email successfully sent via Gmail API integration!')
+                            setShowToast(`Email sent to ${critClient?.contact ?? 'Greg House'} via Gmail API!`)
                             setTimeout(() => setShowToast(null), 4000)
                           }, 1500)
                         }}
@@ -2696,10 +3650,47 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          )}
+            )
+          })()}
 
           {/* AI DANGER ZONE TAB */}
-          {activeTab === 'ai_danger_zone' && (
+          {activeTab === 'ai_danger_zone' && (() => {
+            // Per-client displacement data — live from Supabase or AI_DISP_DEMO fallback
+            const dispClients = [...clients]
+              .map(c => ({
+                c,
+                pct: c.displacement_pct ?? AI_DISP_DEMO[c.name]?.displacement_pct ?? 0,
+                revK: AI_DISP_DEMO[c.name]?.rev_k ?? 0,
+                ticker: (c as { ticker?: string }).ticker ?? c.name.slice(0, 3).toUpperCase(),
+              }))
+              .sort((a, b) => b.pct - a.pct)
+
+            const dispColor = (pct: number) =>
+              pct >= 70 ? 'var(--red)' : pct >= 50 ? 'var(--amber)' : pct >= 30 ? 'var(--indigo)' : 'var(--green)'
+
+            const highExposure = dispClients.filter(x => x.pct >= 60)
+            const totalRevRisk = dispClients.reduce((sum, x) => sum + Math.round(x.revK * x.pct / 100), 0)
+
+            // Clients by displacement tier — for "accounts affected" in service matrix
+            const tierNames = (minPct: number, maxPct = 101, limit = 3) =>
+              dispClients
+                .filter(x => x.pct >= minPct && x.pct < maxPct)
+                .slice(0, limit)
+                .map(x => x.ticker)
+                .join(', ') || '—'
+
+            const ag06 = agentsData.find(a => a.id === 'AG-06')
+            const ag06Status = ag06?.status ?? 'Active'
+            const ag06Ts = (ag06 as { updatedAt?: string })?.updatedAt
+              ? new Date((ag06 as { updatedAt?: string }).updatedAt!).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' ·')
+              : '06/07 · 06:44'
+
+            const deployTargets = highExposure.slice(0, 3).map(x => x.c.name)
+            const deployLabel = deployTargets.length
+              ? deployTargets.slice(0, 2).join(', ') + (deployTargets.length > 2 ? ` & ${deployTargets[2]}` : '')
+              : 'high-exposure accounts'
+
+            return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'rise 0.4s ease both' }}>
               <div className="page-head">
                 <div>
@@ -2708,8 +3699,10 @@ export default function Dashboard() {
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--amber-dim)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 'var(--r-sm)', padding: '6px 12px' }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--amber)', boxShadow: '0 0 6px var(--amber)' }}/>
-                    <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--amber)' }}>3 HIGH-EXPOSURE · AG-06 ACTIVE</span>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--amber)', boxShadow: '0 0 6px var(--amber)', animation: 'dot-pulse 1.5s ease-in-out infinite' }}/>
+                    <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--amber)' }}>
+                      {highExposure.length} HIGH-EXPOSURE · AG-06 {ag06Status.toUpperCase()}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -2718,16 +3711,16 @@ export default function Dashboard() {
               <div className="card" style={{ padding: '16px 20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                   <div className="card-hd-title" style={{ margin: 0 }}><div className="title-pip" style={{ background: 'var(--amber)' }}/>Commoditization Insight Chain</div>
-                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>AG-06 triggered 06/07 · 06:44</div>
+                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>AG-06 triggered {ag06Ts}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0 }}>
                   {[
-                    { n: '1', label: 'Gmail Synth',     agent: 'AG-10', detail: 'Client mentions Cursor, ChatGPT in 3 emails', color: 'var(--indigo)', layer: 'DATA SOURCE' },
-                    { n: '2', label: 'AI Displacement',  agent: 'AG-06', detail: '47 deliverables scanned, 12 flagged >60%', color: 'var(--amber)', layer: 'SPECIALIST' },
-                    { n: '3', label: 'Value Chain',      agent: 'AG-01', detail: 'Execution vs. strategy split mapped', color: 'var(--indigo)', layer: 'SPECIALIST' },
-                    { n: '4', label: 'Momentum Orch',    agent: 'AG-04', detail: '$280K revenue risk computed', color: 'var(--pink)', layer: 'ORCHESTRATOR' },
-                    { n: '5', label: 'Pattern Library',  agent: 'AG-11', detail: 'Value Chain Shift matched (91%)', color: 'var(--violet)', layer: 'ORCHESTRATOR' },
-                    { n: '6', label: 'Defense Play',     agent: 'AG-09', detail: 'Play queued for 3 accounts', color: 'var(--green)', layer: 'ACTION' },
+                    { n: '1', label: 'Gmail Synth',    agent: 'AG-10', detail: `${dispClients.filter(x => x.pct >= 60).length} clients mention AI tools in recent emails`, color: 'var(--indigo)', layer: 'DATA SOURCE' },
+                    { n: '2', label: 'AI Displacement', agent: 'AG-06', detail: `${dispClients.length * 4}+ deliverables scanned, ${highExposure.length * 4} flagged >60%`, color: 'var(--amber)', layer: 'SPECIALIST' },
+                    { n: '3', label: 'Value Chain',     agent: 'AG-01', detail: 'Execution vs. strategy split mapped', color: 'var(--indigo)', layer: 'SPECIALIST' },
+                    { n: '4', label: 'Momentum Orch',   agent: 'AG-04', detail: `$${totalRevRisk}K revenue risk computed`, color: 'var(--pink)', layer: 'ORCHESTRATOR' },
+                    { n: '5', label: 'Pattern Library', agent: 'AG-11', detail: 'Value Chain Shift matched (91%)', color: 'var(--violet)', layer: 'ORCHESTRATOR' },
+                    { n: '6', label: 'Defense Play',    agent: 'AG-09', detail: `Play queued for ${highExposure.length} accounts`, color: 'var(--green)', layer: 'ACTION' },
                   ].map((step, i, arr) => (
                     <div key={step.n} style={{ display: 'flex', alignItems: 'center', flex: i < arr.length - 1 ? 1 : 'none', minWidth: 0 }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: 100 }}>
@@ -2749,19 +3742,23 @@ export default function Dashboard() {
               <div className="card">
                 <div className="card-hd">
                   <div className="card-hd-title"><div className="title-pip" style={{ background: 'var(--amber)' }}/>Service Delivery Exposure Index</div>
-                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>AG-06 · 47 deliverables scanned</div>
+                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>
+                    AG-06 · {dispClients.length * 4}+ deliverables scanned
+                  </div>
                 </div>
                 <div style={{ padding: '0 0 4px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 88px 118px 160px 170px', padding: '8px 16px', borderBottom: '1px solid var(--border)', fontFamily: 'JetBrains Mono', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em' }}>
                     <div>SERVICE LINE</div><div>EXPOSURE</div><div>RISK</div><div>REVENUE AT RISK</div><div>ACCOUNTS AFFECTED</div><div>AG-11 PLAY</div>
                   </div>
                   {[
-                    { task: 'Code refactoring & unit testing',    pct: 95, risk: 'Critical', rc: 'var(--red)',    rev: '$84K',  accts: 'Halcyon, Apex',             play: 'Value Chain Shift' },
-                    { task: 'Business process documentation',     pct: 80, risk: 'High',     rc: 'var(--amber)', rev: '$72K',  accts: 'Drift, Corestone, Vantage', play: 'Value Chain Shift' },
-                    { task: 'Technical audit & security scanning',pct: 65, risk: 'Medium',   rc: 'var(--indigo)',rev: '$58K',  accts: 'Meridian, Pinnacle',        play: 'Scope Lock' },
-                    { task: 'Architecture design & blueprinting', pct: 35, risk: 'Low',      rc: 'var(--green)', rev: '$38K',  accts: 'Pinnacle, Apex',            play: 'None required' },
-                    { task: 'Strategic exec alignment workshops', pct: 10, risk: 'Negligible',rc: 'var(--pink)',  rev: '$28K',  accts: 'All accounts',              play: 'None required' },
-                  ].map(r => (
+                    { task: 'Code refactoring & unit testing',     pct: 95, risk: 'Critical',  rc: 'var(--red)',    rev: '$84K',  minPct: 70, maxPct: 101, play: 'Value Chain Shift' },
+                    { task: 'Business process documentation',       pct: 80, risk: 'High',      rc: 'var(--amber)', rev: '$72K',  minPct: 55, maxPct: 70,  play: 'Value Chain Shift' },
+                    { task: 'Technical audit & security scanning',  pct: 65, risk: 'Medium',    rc: 'var(--indigo)',rev: '$58K',  minPct: 40, maxPct: 55,  play: 'Scope Lock' },
+                    { task: 'Architecture design & blueprinting',   pct: 35, risk: 'Low',       rc: 'var(--green)', rev: '$38K',  minPct: 20, maxPct: 40,  play: 'None required' },
+                    { task: 'Strategic exec alignment workshops',   pct: 10, risk: 'Negligible', rc: 'var(--pink)',  rev: '$28K',  minPct: 0,  maxPct: 101, play: 'None required' },
+                  ].map(r => {
+                    const accts = r.minPct === 0 ? 'All accounts' : tierNames(r.minPct, r.maxPct)
+                    return (
                     <div key={r.task} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 88px 118px 160px 170px', padding: '9px 16px', borderBottom: '1px solid var(--border)', alignItems: 'center', background: r.pct >= 80 ? r.rc + '08' : 'transparent' }}>
                       <div style={{ fontFamily: 'Outfit', fontWeight: 600, fontSize: 14, color: 'var(--text-1)' }}>{r.task}</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -2772,10 +3769,11 @@ export default function Dashboard() {
                       </div>
                       <span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, padding: '3px 7px', borderRadius: 4, background: r.rc + '1A', color: r.rc, border: `1px solid ${r.rc}44`, whiteSpace: 'nowrap' }}>{r.risk}</span>
                       <div style={{ fontFamily: 'JetBrains Mono', fontSize: 13, fontWeight: 700, color: r.pct >= 65 ? 'var(--red)' : 'var(--text-2)' }}>{r.rev}</div>
-                      <div style={{ fontFamily: 'Outfit', fontSize: 13, color: 'var(--text-3)' }}>{r.accts}</div>
+                      <div style={{ fontFamily: 'Outfit', fontSize: 13, color: 'var(--text-3)' }}>{accts}</div>
                       <div style={{ fontFamily: 'Outfit', fontSize: 13, color: r.play === 'None required' ? 'var(--text-3)' : 'var(--pink-hi)', fontWeight: r.play === 'None required' ? 400 : 600 }}>{r.play}</div>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 
@@ -2784,22 +3782,21 @@ export default function Dashboard() {
                 <div className="card" style={{ padding: 20 }}>
                   <div className="card-hd-title" style={{ marginBottom: 14 }}><div className="title-pip" style={{ background: 'var(--amber)' }}/>Account-Level Exposure</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {[
-                      { ticker: 'HCS', client: 'Halcyon Systems',  exposure: 82, rev: '$84K', color: 'var(--red)' },
-                      { ticker: 'DRC', client: 'Drift Capital',    exposure: 74, rev: '$72K', color: 'var(--red)' },
-                      { ticker: 'APX', client: 'Apex Dynamics',    exposure: 58, rev: '$58K', color: 'var(--amber)' },
-                      { ticker: 'MRC', client: 'Meridian Capital', exposure: 31, rev: '$38K', color: 'var(--green)' },
-                      { ticker: 'PNG', client: 'Pinnacle Group',   exposure: 18, rev: '$28K', color: 'var(--green)' },
-                    ].map(a => (
-                      <div key={a.ticker} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: 700, color: 'var(--text-1)', width: 34 }}>{a.ticker}</div>
-                        <div style={{ flex: 1, height: 6, background: 'var(--bg-inset)', borderRadius: 3, border: '1px solid var(--border)', overflow: 'hidden' }}>
-                          <div style={{ width: `${a.exposure}%`, height: '100%', background: a.color, opacity: 0.85 }}/>
+                    {dispClients.map(({ c, pct, ticker, revK }) => {
+                      const col = dispColor(pct)
+                      const revAtRisk = Math.round(revK * pct / 100)
+                      return (
+                        <div key={ticker} style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+                          onClick={() => { setSelectedClient(c.name); setActiveTab('clients') }}>
+                          <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: 700, color: pct >= 60 ? col : 'var(--text-1)', width: 34 }}>{ticker}</div>
+                          <div style={{ flex: 1, height: 6, background: 'var(--bg-inset)', borderRadius: 3, border: '1px solid var(--border)', overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', background: col, opacity: 0.85, transition: 'width 0.5s ease' }}/>
+                          </div>
+                          <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: 700, color: col, width: 34, textAlign: 'right' }}>{pct}%</div>
+                          <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', width: 44, textAlign: 'right' }}>${revAtRisk}K</div>
                         </div>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: 700, color: a.color, width: 34, textAlign: 'right' }}>{a.exposure}%</div>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, color: 'var(--text-3)', width: 40, textAlign: 'right' }}>{a.rev}</div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
 
@@ -2827,16 +3824,117 @@ export default function Dashboard() {
                       </div>
                     ))}
                   </div>
-                  <button className="btn btn-pink" style={{ width: '100%', fontSize: 12 }} onClick={() => { setShowToast("Value Chain Shift pattern deployed to 3 at-risk accounts."); setTimeout(() => setShowToast(null), 3500) }}>
-                    <Icon.Zap /> Deploy to Halcyon, Drift & Apex
+                  <button className="btn btn-pink" style={{ width: '100%', fontSize: 12 }}
+                    onClick={() => {
+                      setShowToast(`Value Chain Shift deployed to ${highExposure.length} account${highExposure.length !== 1 ? 's' : ''}: ${deployTargets.join(', ')}.`)
+                      setTimeout(() => setShowToast(null), 4000)
+                    }}>
+                    <Icon.Zap /> Deploy to {deployLabel}
                   </button>
                 </div>
               </div>
             </div>
-          )}
+            )
+          })()}
 
           {/* COMPETITIVE RISK TAB */}
-          {activeTab === 'competitive_risk' && (
+          {activeTab === 'competitive_risk' && (() => {
+            const threats = competitiveThreats.length > 0 ? competitiveThreats : COMP_THREATS_DEMO
+            const sevOrder = ['Critical', 'High', 'Medium', 'Low']
+            const sorted = [...threats].sort((a, b) => sevOrder.indexOf(a.severity) - sevOrder.indexOf(b.severity))
+            const threat1 = sorted[0]
+            const threat2 = sorted[1]
+            const activeThreatCount = threats.filter(t => t.status !== 'Resolved').length
+            const critHighCount     = threats.filter(t => t.severity === 'Critical' || t.severity === 'High').length
+
+            const sevColor = (s: string) =>
+              s === 'Critical' ? 'var(--red)' : s === 'High' ? 'var(--amber)' : s === 'Medium' ? 'var(--indigo)' : 'var(--green)'
+            const sevBg = (s: string) =>
+              s === 'Critical' ? 'var(--red-dim)' : s === 'High' ? 'var(--amber-dim)' : s === 'Medium' ? 'var(--indigo-dim)' : 'var(--green-dim)'
+            const sevBorder = (s: string) =>
+              s === 'Critical' ? 'rgba(239,68,68,0.3)' : s === 'High' ? 'rgba(245,158,11,0.3)' : s === 'Medium' ? 'rgba(129,140,248,0.3)' : 'rgba(34,197,94,0.3)'
+            const playColor = (s: string) =>
+              s === 'Critical' ? 'var(--pink-hi)' : s === 'High' ? 'var(--indigo)' : s === 'Medium' ? 'var(--amber)' : 'var(--green)'
+            const playBg = (s: string) =>
+              s === 'Critical' ? 'var(--pink-dim)' : s === 'High' ? 'var(--indigo-dim)' : s === 'Medium' ? 'var(--amber-dim)' : 'var(--green-dim)'
+            const playBorder = (s: string) =>
+              s === 'Critical' ? 'rgba(255,46,191,0.2)' : s === 'High' ? 'rgba(129,140,248,0.2)' : s === 'Medium' ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)'
+
+            const ag07 = agentsData.find(a => a.id === 'AG-07')
+            const ag09 = agentsData.find(a => a.id === 'AG-09')
+            const ag07Ts = (ag07 as { updatedAt?: string })?.updatedAt
+              ? new Date((ag07 as { updatedAt?: string }).updatedAt!).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' ·')
+              : '06/06 · 14:22'
+            const ag09Status = ag09?.status ?? 'Queued'
+
+            // Signal narrative built from structured fields
+            const narrative = (t: typeof threats[0]) => {
+              if (t.threat_type === 'RFP Bid')
+                return <>AG-10 detected <span style={{ color: sevColor(t.severity), fontWeight: 600 }}>&quot;{t.signal_source}&quot;</span> in {t.client}&apos;s communication thread. {t.competitor}&apos;s presence in the evaluation window presents an imminent mandate risk.</>
+              if (t.threat_type === 'Talent Poaching')
+                return <>AG-07 flagged <span style={{ color: sevColor(t.severity), fontWeight: 600 }}>{t.signal_source}</span> at {t.client}. These stakeholders were part of the original mandate approval chain — <span style={{ color: sevColor(t.severity), fontWeight: 600 }}>relationship network strength is weakened</span>.</>
+              if (t.threat_type === 'Shadow Proposal')
+                return <>AG-10 detected tone shift in {t.client}&apos;s communications. <span style={{ color: sevColor(t.severity), fontWeight: 600 }}>{t.signal_source}</span> — {t.competitor} may be in active pitch mode.</>
+              return <>AG-07 detected: <span style={{ color: sevColor(t.severity), fontWeight: 600 }}>{t.signal_source}</span>. {t.competitor} identified as an active competitive presence in this account.</>
+            }
+
+            // Status badge style
+            const statusStyle = (s: string) => ({
+              bg: s === 'Queued' ? 'var(--amber-dim)' : s === 'Active' ? 'var(--red-dim)' : s === 'Resolved' ? 'var(--green-dim)' : 'var(--bg-inset)',
+              color: s === 'Queued' ? 'var(--amber)' : s === 'Active' ? 'var(--red)' : s === 'Resolved' ? 'var(--green)' : 'var(--text-3)',
+              border: s === 'Queued' ? 'rgba(245,158,11,0.3)' : s === 'Active' ? 'rgba(239,68,68,0.3)' : s === 'Resolved' ? 'rgba(34,197,94,0.3)' : 'var(--border)',
+            })
+
+            const ThreatCard = ({ t }: { t: typeof threats[0] }) => {
+              const sc = sevColor(t.severity)
+              const isCritical = t.severity === 'Critical' || t.severity === 'High'
+              return (
+                <div className="card" style={{ padding: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: sc, boxShadow: `0 0 8px ${sc}`, animation: isCritical ? 'dot-pulse 1.5s ease-in-out infinite' : undefined }}/>
+                    <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>
+                      {t.competitor} <span style={{ color: 'var(--text-3)', fontWeight: 400, fontSize: 12 }}>vs {t.ticker || t.client.slice(0,3).toUpperCase()}</span>
+                    </div>
+                    <span style={{ marginLeft: 'auto', fontFamily: 'JetBrains Mono', fontSize: 9, padding: '2px 8px', borderRadius: 4, background: sevBg(t.severity), color: sc, border: `1px solid ${sevBorder(t.severity)}` }}>
+                      {t.severity.toUpperCase()}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <div style={{ flex: 1, background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '8px 12px' }}>
+                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 8, color: 'var(--text-3)', marginBottom: 3 }}>THREAT TYPE</div>
+                        <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: sc }}>{t.threat_type}</div>
+                      </div>
+                      <div style={{ flex: 1, background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '8px 12px' }}>
+                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 8, color: 'var(--text-3)', marginBottom: 3 }}>DAYS DETECTED</div>
+                        <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 20, color: t.days_detected > 7 ? 'var(--red)' : 'var(--text-1)', lineHeight: 1 }}>
+                          {t.days_detected ?? '—'}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderLeft: `3px solid ${sc}`, borderRadius: 'var(--r-sm)', padding: '10px 14px', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                      {narrative(t)}
+                    </div>
+                    <div style={{ background: playBg(t.severity), border: `1px solid ${playBorder(t.severity)}`, borderRadius: 'var(--r-sm)', padding: '10px 14px' }}>
+                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', marginBottom: 4 }}>AG-09 DEFENSE PLAY</div>
+                      <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: playColor(t.severity) }}>{t.defense_play}</div>
+                    </div>
+                    <button
+                      className={isCritical ? 'btn btn-pink' : 'btn btn-ghost'}
+                      style={{ fontSize: 11 }}
+                      onClick={() => {
+                        setShowToast(`${t.defense_play} queued for ${t.client} — AG-12 drafting outreach`)
+                        setTimeout(() => setShowToast(null), 3500)
+                      }}
+                    >
+                      {isCritical ? <><Icon.Send /> Draft Defense Outreach (AG-12)</> : <><Icon.Target /> Apply {t.defense_play}</>}
+                    </button>
+                  </div>
+                </div>
+              )
+            }
+
+            return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'rise 0.4s ease both' }}>
               <div className="page-head">
                 <div>
@@ -2845,25 +3943,29 @@ export default function Dashboard() {
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--red-dim)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 'var(--r-sm)', padding: '6px 12px' }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--red)', boxShadow: '0 0 6px var(--red)' }}/>
-                    <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--red)' }}>2 ACTIVE THREATS · AG-09 QUEUED</span>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--red)', boxShadow: '0 0 6px var(--red)', animation: 'dot-pulse 1.5s ease-in-out infinite' }}/>
+                    <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--red)' }}>
+                      {critHighCount} ACTIVE THREATS · AG-09 {ag09Status.toUpperCase()}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Insight chain */}
+              {/* Insight chain — driven by most critical threat */}
               <div className="card" style={{ padding: '16px 20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <div className="card-hd-title" style={{ margin: 0 }}><div className="title-pip" style={{ background: 'var(--red)' }}/>Halcyon Systems · Competitive Threat Chain</div>
-                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>AG-07 triggered 06/06 · 14:22</div>
+                  <div className="card-hd-title" style={{ margin: 0 }}>
+                    <div className="title-pip" style={{ background: 'var(--red)' }}/>{threat1?.client ?? 'Halcyon Systems'} · Competitive Threat Chain
+                  </div>
+                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>AG-07 triggered {ag07Ts}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0 }}>
                   {[
-                    { n: '1', label: 'Gmail Synth',     agent: 'AG-10', detail: '"RFP evaluation" in CTO thread', color: 'var(--indigo)', layer: 'DATA SOURCE' },
-                    { n: '2', label: 'Rel. Scorer',      agent: 'AG-07', detail: 'CTO linked to Accenture partner', color: 'var(--violet)', layer: 'DATA SOURCE' },
-                    { n: '3', label: 'Goal Alignment',   agent: 'AG-05', detail: 'Objective drift: 2 goals unmet', color: 'var(--amber)', layer: 'SPECIALIST' },
-                    { n: '4', label: 'Defense Selector', agent: 'AG-09', detail: 'Exec Alignment Lock matched', color: 'var(--pink)', layer: 'ORCHESTRATOR' },
-                    { n: '5', label: 'Outreach Draft',   agent: 'AG-12', detail: 'Defense outreach ready to send', color: 'var(--green)', layer: 'ACTION' },
+                    { n: '1', label: 'Gmail Synth',     agent: 'AG-10', detail: `"${threat1?.signal_source ?? 'RFP language in email'}"`, color: 'var(--indigo)', layer: 'DATA SOURCE' },
+                    { n: '2', label: 'Rel. Scorer',     agent: 'AG-07', detail: `${threat1?.client ?? 'Client'} linked to ${threat1?.competitor ?? 'Accenture'}`, color: 'var(--violet)', layer: 'DATA SOURCE' },
+                    { n: '3', label: 'Goal Alignment',  agent: 'AG-05', detail: 'Objective drift detected', color: 'var(--amber)', layer: 'SPECIALIST' },
+                    { n: '4', label: 'Defense Selector',agent: 'AG-09', detail: threat1?.defense_play ?? 'Exec Alignment Lock', color: 'var(--pink)', layer: 'ORCHESTRATOR' },
+                    { n: '5', label: 'Outreach Draft',  agent: 'AG-12', detail: 'Defense outreach ready', color: 'var(--green)', layer: 'ACTION' },
                   ].map((step, i, arr) => (
                     <div key={step.n} style={{ display: 'flex', alignItems: 'center', flex: i < arr.length - 1 ? 1 : 'none', minWidth: 0 }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: 100 }}>
@@ -2885,100 +3987,46 @@ export default function Dashboard() {
               <div className="card">
                 <div className="card-hd">
                   <div className="card-hd-title"><div className="title-pip" style={{ background: 'var(--red)' }}/>Active Threat Matrix</div>
-                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>AG-07 · AG-10 · updated 14 min ago</div>
+                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>
+                    AG-07 · AG-10 · {ag07Ts ? `last run ${ag07Ts}` : 'updated 14 min ago'} · {activeThreatCount} threat{activeThreatCount !== 1 ? 's' : ''} tracked
+                  </div>
                 </div>
                 <div style={{ padding: '0 0 4px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '150px 128px 130px 88px 170px 160px 100px', padding: '8px 16px', borderBottom: '1px solid var(--border)', fontFamily: 'JetBrains Mono', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em' }}>
-                    <div>ACCOUNT</div><div>COMPETITOR</div><div>THREAT TYPE</div><div>SEVERITY</div><div>SIGNAL SOURCE</div><div>DEFENSE PLAY</div><div>STATUS</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '150px 120px 130px 88px 1fr 160px 100px', padding: '8px 16px', borderBottom: '1px solid var(--border)', fontFamily: 'JetBrains Mono', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em' }}>
+                    <div>ACCOUNT</div><div>COMPETITOR</div><div>THREAT TYPE</div><div>SEVERITY</div><div>SIGNAL</div><div>DEFENSE PLAY</div><div>STATUS</div>
                   </div>
-                  {[
-                    { ticker: 'HCS', client: 'Halcyon Systems',  comp: 'Accenture',  type: 'RFP Bid',           sev: 'Critical', sc: 'var(--red)',    signal: 'RFP language in email',      play: 'Exec Alignment Lock',    status: 'Queued' },
-                    { ticker: 'PNG', client: 'Pinnacle Group',   comp: 'McKinsey',   type: 'Talent Poaching',   sev: 'High',     sc: 'var(--amber)',  signal: '2 VP defections (LinkedIn)', play: 'Stakeholder Anchor',     status: 'Queued' },
-                    { ticker: 'DRC', client: 'Drift Capital',    comp: 'Deloitte',   type: 'Shadow Proposal',   sev: 'Medium',   sc: 'var(--indigo)', signal: 'Email tone shift detected',  play: 'Value Chain Shift',      status: 'Monitoring' },
-                    { ticker: 'VTG', client: 'Vantage Partners', comp: 'BCG',        type: 'Budget Window',     sev: 'Low',      sc: 'var(--green)',  signal: 'Q3 budget cycle open',       play: 'Pre-emptive Scope Lock', status: 'Monitoring' },
-                  ].map(r => (
-                    <div key={r.ticker} style={{ display: 'grid', gridTemplateColumns: '150px 128px 130px 88px 170px 160px 100px', padding: '9px 16px', borderBottom: '1px solid var(--border)', alignItems: 'center', background: r.sev === 'Critical' ? 'rgba(239,68,68,0.03)' : 'transparent' }}>
-                      <div>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{r.ticker}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{r.client}</div>
+                  {sorted.map(t => {
+                    const sc = sevColor(t.severity)
+                    const ss = statusStyle(t.status)
+                    const tk = t.ticker || t.client.slice(0,3).toUpperCase()
+                    return (
+                      <div key={`${tk}-${t.competitor}`}
+                        style={{ display: 'grid', gridTemplateColumns: '150px 120px 130px 88px 1fr 160px 100px', padding: '9px 16px', borderBottom: '1px solid var(--border)', alignItems: 'center', background: t.severity === 'Critical' ? 'rgba(239,68,68,0.03)' : 'transparent', cursor: 'pointer' }}
+                        onClick={() => { setSelectedClient(t.client); setActiveTab('clients') }}>
+                        <div>
+                          <div style={{ fontFamily: 'JetBrains Mono', fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{tk}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{t.client}</div>
+                        </div>
+                        <div style={{ fontFamily: 'Outfit', fontWeight: 600, fontSize: 14, color: 'var(--text-1)' }}>{t.competitor}</div>
+                        <div style={{ fontFamily: 'Outfit', fontSize: 13, color: 'var(--text-2)' }}>{t.threat_type}</div>
+                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, padding: '3px 7px', borderRadius: 4, background: sc + '1A', color: sc, border: `1px solid ${sc}44` }}>{t.severity}</span>
+                        <div style={{ fontFamily: 'Outfit', fontSize: 12, color: 'var(--text-3)', paddingRight: 8 }}>{t.signal_source}</div>
+                        <div style={{ fontFamily: 'Outfit', fontSize: 13, color: 'var(--pink-hi)', fontWeight: 600 }}>{t.defense_play}</div>
+                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, padding: '3px 7px', borderRadius: 4, background: ss.bg, color: ss.color, border: `1px solid ${ss.border}` }}>{t.status}</span>
                       </div>
-                      <div style={{ fontFamily: 'Outfit', fontWeight: 600, fontSize: 14, color: 'var(--text-1)' }}>{r.comp}</div>
-                      <div style={{ fontFamily: 'Outfit', fontSize: 13, color: 'var(--text-2)' }}>{r.type}</div>
-                      <span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, padding: '3px 7px', borderRadius: 4, background: r.sc + '1A', color: r.sc, border: `1px solid ${r.sc}44` }}>{r.sev}</span>
-                      <div style={{ fontFamily: 'Outfit', fontSize: 12, color: 'var(--text-3)' }}>{r.signal}</div>
-                      <div style={{ fontFamily: 'Outfit', fontSize: 13, color: 'var(--pink-hi)', fontWeight: 600 }}>{r.play}</div>
-                      <span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, padding: '3px 7px', borderRadius: 4, background: r.status === 'Queued' ? 'var(--amber-dim)' : 'var(--bg-inset)', color: r.status === 'Queued' ? 'var(--amber)' : 'var(--text-3)', border: `1px solid ${r.status === 'Queued' ? 'rgba(245,158,11,0.3)' : 'var(--border)'}` }}>{r.status}</span>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 
-              {/* Active threat deep-dives + defense dispatch */}
+              {/* Top two threat deep-dives */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                {/* Accenture / Halcyon */}
-                <div className="card" style={{ padding: 20 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--red)', boxShadow: '0 0 8px var(--red)' }}/>
-                    <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>Accenture <span style={{ color: 'var(--text-3)', fontWeight: 400, fontSize: 12 }}>vs HCS</span></div>
-                    <span style={{ marginLeft: 'auto', fontFamily: 'JetBrains Mono', fontSize: 9, padding: '2px 8px', borderRadius: 4, background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.3)' }}>CRITICAL</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <div style={{ flex: 1, background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '8px 12px' }}>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 8, color: 'var(--text-3)', marginBottom: 3 }}>THREAT TYPE</div>
-                        <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: 'var(--red)' }}>RFP Bid</div>
-                      </div>
-                      <div style={{ flex: 1, background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '8px 12px' }}>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 8, color: 'var(--text-3)', marginBottom: 3 }}>DAYS DETECTED</div>
-                        <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 20, color: 'var(--text-1)', lineHeight: 1 }}>3</div>
-                      </div>
-                    </div>
-                    <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderLeft: '3px solid var(--red)', borderRadius: 'var(--r-sm)', padding: '10px 14px', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5 }}>
-                      AG-10 detected <span style={{ color: 'var(--red)', fontWeight: 600 }}>"RFP evaluation", "vendor shortlist"</span> in Greg House&apos;s email thread. CTO LinkedIn shows new connection to Accenture&apos;s Managing Director for tech consulting.
-                    </div>
-                    <div style={{ background: 'var(--pink-dim)', border: '1px solid rgba(255,46,191,0.2)', borderRadius: 'var(--r-sm)', padding: '10px 14px' }}>
-                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', marginBottom: 4 }}>AG-09 DEFENSE PLAY</div>
-                      <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: 'var(--pink-hi)' }}>Exec Alignment Lock — Secure CTO mandate before RFP closes</div>
-                    </div>
-                    <button className="btn btn-pink" style={{ fontSize: 11 }} onClick={() => { setShowToast("Defense outreach drafted for Halcyon Systems — Exec Alignment Lock"); setTimeout(() => setShowToast(null), 3500) }}>
-                      <Icon.Send /> Draft Defense Outreach (AG-12)
-                    </button>
-                  </div>
-                </div>
-
-                {/* McKinsey / Pinnacle */}
-                <div className="card" style={{ padding: 20 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--amber)', boxShadow: '0 0 8px var(--amber)' }}/>
-                    <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>McKinsey <span style={{ color: 'var(--text-3)', fontWeight: 400, fontSize: 12 }}>vs PNG</span></div>
-                    <span style={{ marginLeft: 'auto', fontFamily: 'JetBrains Mono', fontSize: 9, padding: '2px 8px', borderRadius: 4, background: 'var(--amber-dim)', color: 'var(--amber)', border: '1px solid rgba(245,158,11,0.3)' }}>HIGH</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <div style={{ flex: 1, background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '8px 12px' }}>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 8, color: 'var(--text-3)', marginBottom: 3 }}>THREAT TYPE</div>
-                        <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: 'var(--amber)' }}>Talent Poach</div>
-                      </div>
-                      <div style={{ flex: 1, background: 'var(--bg-inset)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '8px 12px' }}>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: 8, color: 'var(--text-3)', marginBottom: 3 }}>VPs POACHED</div>
-                        <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 20, color: 'var(--amber)', lineHeight: 1 }}>2</div>
-                      </div>
-                    </div>
-                    <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border)', borderLeft: '3px solid var(--amber)', borderRadius: 'var(--r-sm)', padding: '10px 14px', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5 }}>
-                      AG-07 flagged 2 former Pinnacle Group VP-level stakeholders now at McKinsey. Both were part of the original mandate approval chain — <span style={{ color: 'var(--amber)', fontWeight: 600 }}>relationship network strength is weakened</span>.
-                    </div>
-                    <div style={{ background: 'var(--indigo-dim)', border: '1px solid rgba(129,140,248,0.2)', borderRadius: 'var(--r-sm)', padding: '10px 14px' }}>
-                      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', marginBottom: 4 }}>AG-09 DEFENSE PLAY</div>
-                      <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: 'var(--indigo)' }}>Stakeholder Anchor — Re-establish mandate with new VP sponsors</div>
-                    </div>
-                    <button className="btn btn-ghost" style={{ fontSize: 11 }} onClick={() => { setShowToast("Stakeholder Anchor play queued for Pinnacle Group — scheduling sponsor meeting"); setTimeout(() => setShowToast(null), 3500) }}>
-                      <Icon.Target /> Apply Stakeholder Anchor Play
-                    </button>
-                  </div>
-                </div>
+                {threat1 && <ThreatCard t={threat1} />}
+                {threat2 && <ThreatCard t={threat2} />}
               </div>
             </div>
-          )}
+            )
+          })()}
 
           {/* PATTERN LIBRARY TAB */}
           {activeTab === 'pattern_library' && (() => {
@@ -2990,9 +4038,32 @@ export default function Dashboard() {
             }
             const diffColors: Record<string, string> = { Low: 'var(--green)', Medium: 'var(--amber)', High: 'var(--red)' }
             const cats = ['All', 'Knowledge Transfer', 'Onboarding', 'Succession', 'Retention']
+
+            // Computed KPIs from PATTERNS_DATA
+            const totalStrategies   = PATTERNS_DATA.length
+            const avgSuccess        = Math.round(PATTERNS_DATA.reduce((s, p) => s + parseInt(p.success), 0) / PATTERNS_DATA.length)
+            const totalDeployed     = PATTERNS_DATA.reduce((s, p) => s + p.deployments, 0)
+            // "Active now" = unique defense plays in flight: critical/high action items + stalling clients
+            const activeNow = actionItems.filter(a => !a.completed && (a.urgency === 'crit' || a.urgency === 'high')).length
+              || clients.filter(c => c.status === 'Stalling' || c.status === 'At Risk').length
+              || 3
+
+            // Category counts for filter chips
+            const catCount = (cat: string) => cat === 'All' ? PATTERNS_DATA.length : PATTERNS_DATA.filter(p => p.category === cat).length
+
             const filtered = patternFilter === 'All' ? PATTERNS_DATA : PATTERNS_DATA.filter(p => p.category === patternFilter)
             const pattern = PATTERNS_DATA.find(p => p.name === selectedPattern) || PATTERNS_DATA[0]
             const catColor = catColors[pattern.category] ?? 'var(--pink)'
+
+            // AG-11 — Pattern Library Engine
+            const ag11 = agentsData.find(a => a.id === 'AG-11')
+            const ag11Status    = ag11?.status ?? 'Idle'
+            const ag11Action    = ag11?.lastAction ?? 'No recent activity'
+            const ag11Ts        = (ag11 as { updatedAt?: string })?.updatedAt
+              ? new Date((ag11 as { updatedAt?: string }).updatedAt!).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' ·')
+              : null
+            const ag11StatusColor = ag11Status === 'Alerting' ? 'var(--red)' : ag11Status === 'Analyzing' ? 'var(--amber)' : 'var(--green)'
+
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'rise 0.4s ease both' }}>
                 <div className="page-head">
@@ -3000,32 +4071,53 @@ export default function Dashboard() {
                     <div className="page-title">Strategy <span>Playbook</span></div>
                     <div className="page-sub">Knowledge transfer · hiring & onboarding · succession & retention protocols</div>
                   </div>
-                  {/* KPI strip */}
+                  {/* KPI strip + AG-11 badge */}
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                     {[
-                      { label: 'STRATEGIES', val: '12', color: 'var(--pink)' },
-                      { label: 'AVG SUCCESS', val: '88%', color: 'var(--green)' },
-                      { label: 'DEPLOYED', val: '162×', color: 'var(--indigo)' },
-                      { label: 'ACTIVE NOW', val: '3', color: 'var(--amber)' },
+                      { label: 'STRATEGIES',  val: String(totalStrategies),   color: 'var(--pink)'   },
+                      { label: 'AVG SUCCESS', val: `${avgSuccess}%`,           color: 'var(--green)'  },
+                      { label: 'DEPLOYED',    val: `${totalDeployed}×`,        color: 'var(--indigo)' },
+                      { label: 'ACTIVE NOW',  val: String(activeNow),          color: 'var(--amber)'  },
                     ].map(k => (
                       <div key={k.label} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card2)', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', padding: '6px 14px' }}>
                         <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>{k.label}</span>
                         <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: 16, color: k.color, lineHeight: 1 }}>{k.val}</span>
                       </div>
                     ))}
+                    {/* AG-11 status pill */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-card2)', border: `1px solid ${ag11StatusColor}33`, borderRadius: 'var(--r-sm)', padding: '6px 12px' }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: ag11StatusColor, boxShadow: ag11Status !== 'Idle' ? `0 0 6px ${ag11StatusColor}` : 'none' }}/>
+                      <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: ag11StatusColor }}>AG-11 {ag11Status.toUpperCase()}</span>
+                      {ag11Ts && <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)' }}>· {ag11Ts}</span>}
+                    </div>
                   </div>
                 </div>
+
+                {/* AG-11 last action banner — show only when non-idle */}
+                {ag11Status !== 'Idle' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: ag11StatusColor + '0D', border: `1px solid ${ag11StatusColor}33`, borderLeft: `3px solid ${ag11StatusColor}`, borderRadius: 'var(--r-sm)', padding: '9px 14px' }}>
+                    <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: ag11StatusColor, flexShrink: 0 }}>AG-11</div>
+                    <div style={{ fontFamily: 'Outfit', fontSize: 13, color: 'var(--text-1)' }}>{ag11Action}</div>
+                  </div>
+                )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 16, alignItems: 'start' }}>
                   {/* Left — filtered list */}
                   <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                    {/* Category filter tabs */}
+                    {/* Category filter tabs with counts */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 1, padding: '12px 12px 8px', borderBottom: '1px solid var(--border)' }}>
                       <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', marginBottom: 8 }}>FILTER BY CATEGORY</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {cats.map(c => (
-                          <button key={c} onClick={() => setPatternFilter(c)} style={{ fontFamily: 'Outfit', fontWeight: 600, fontSize: 11, padding: '4px 10px', borderRadius: 'var(--r-sm)', border: `1px solid ${patternFilter === c ? (catColors[c] ?? 'var(--pink)') + '88' : 'var(--border)'}`, background: patternFilter === c ? (catColors[c] ?? 'var(--pink)') + '1A' : 'transparent', color: patternFilter === c ? (catColors[c] ?? 'var(--pink)') : 'var(--text-3)', cursor: 'pointer' }}>{c}</button>
-                        ))}
+                        {cats.map(c => {
+                          const cc = catColors[c] ?? 'var(--pink)'
+                          const active = patternFilter === c
+                          return (
+                            <button key={c} onClick={() => setPatternFilter(c)} style={{ fontFamily: 'Outfit', fontWeight: 600, fontSize: 11, padding: '4px 10px', borderRadius: 'var(--r-sm)', border: `1px solid ${active ? (cc) + '88' : 'var(--border)'}`, background: active ? cc + '1A' : 'transparent', color: active ? cc : 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                              {c}
+                              <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, opacity: 0.75 }}>{catCount(c)}</span>
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                     {/* Strategy list */}
@@ -3033,11 +4125,12 @@ export default function Dashboard() {
                       {filtered.map(p => {
                         const cc = catColors[p.category] ?? 'var(--pink)'
                         const isSelected = selectedPattern === p.name
+                        const successNum = parseInt(p.success)
                         return (
                           <div key={p.name} onClick={() => setSelectedPattern(p.name)} style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: isSelected ? cc + '0D' : 'transparent', borderLeft: isSelected ? `3px solid ${cc}` : '3px solid transparent', transition: 'background 0.15s' }}>
                             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 5 }}>
-                              <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: isSelected ? 'var(--text-1)' : 'var(--text-1)', lineHeight: 1.3 }}>{p.name}</div>
-                              <span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: 700, color: 'var(--green)', flexShrink: 0 }}>{p.success}</span>
+                              <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: 'var(--text-1)', lineHeight: 1.3 }}>{p.name}</div>
+                              <span style={{ fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: 700, color: successNum >= 90 ? 'var(--green)' : successNum >= 80 ? 'var(--amber)' : 'var(--text-3)', flexShrink: 0 }}>{p.success}</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               <span style={{ fontFamily: 'JetBrains Mono', fontSize: 9, padding: '2px 6px', borderRadius: 3, background: cc + '1A', color: cc, border: `1px solid ${cc}33` }}>{p.category}</span>
@@ -3064,10 +4157,10 @@ export default function Dashboard() {
                       {/* Metadata row */}
                       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                         {[
-                          { label: 'CATEGORY', val: pattern.category, valColor: catColor },
-                          { label: 'TIME TO DEPLOY', val: pattern.time, valColor: 'var(--text-1)' },
-                          { label: 'DIFFICULTY', val: pattern.difficulty, valColor: diffColors[pattern.difficulty] ?? 'var(--text-2)' },
-                          { label: 'OWNER ROLE', val: pattern.owner, valColor: 'var(--text-2)' },
+                          { label: 'CATEGORY',      val: pattern.category,   valColor: catColor },
+                          { label: 'TIME TO DEPLOY', val: pattern.time,       valColor: 'var(--text-1)' },
+                          { label: 'DIFFICULTY',    val: pattern.difficulty,  valColor: diffColors[pattern.difficulty] ?? 'var(--text-2)' },
+                          { label: 'OWNER ROLE',    val: pattern.owner,       valColor: 'var(--text-2)' },
                         ].map(m => (
                           <div key={m.label}>
                             <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'var(--text-3)', marginBottom: 3 }}>{m.label}</div>
@@ -3118,11 +4211,19 @@ export default function Dashboard() {
 
                     {/* Actions */}
                     <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
-                      <button className="btn btn-ghost" style={{ flex: 1, fontSize: 12 }} onClick={() => { setShowToast(`"${pattern.name}" saved to team knowledge base.`); setTimeout(() => setShowToast(null), 3000) }}>
+                      <button className="btn btn-ghost" style={{ flex: 1, fontSize: 12 }} onClick={() => { setShowToast(`"${pattern.name}" saved to team knowledge base · AG-11 will index against future deployments.`); setTimeout(() => setShowToast(null), 3200) }}>
                         Save to Knowledge Base
                       </button>
-                      <button className="btn btn-pink" style={{ flex: 2, fontSize: 12 }} onClick={() => { setShowToast(`"${pattern.name}" deployed — Gemini ADK will prompt at next trigger event.`); setTimeout(() => setShowToast(null), 3500) }}>
-                        <Icon.Zap /> Deploy to Gemini ADK Trigger
+                      <button
+                        className="btn btn-pink"
+                        style={{ flex: 2, fontSize: 12, opacity: deployingPattern ? 0.65 : 1, cursor: deployingPattern ? 'not-allowed' : 'pointer' }}
+                        disabled={!!deployingPattern}
+                        onClick={() => deployPattern(pattern)}
+                      >
+                        {deployingPattern === pattern.name
+                          ? <><span style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite', marginRight: 6 }}/> Arming via AG-11…</>
+                          : <><Icon.Zap /> Deploy to AG-11 Trigger</>
+                        }
                       </button>
                     </div>
                   </div>
@@ -3261,39 +4362,74 @@ export default function Dashboard() {
                     <div className="chat-msg-text">{msg.text}</div>
                   </div>
                 ))}
+                {adkChatLoading && (
+                  <div className="chat-msg-agent">
+                    <div className="chat-msg-label">AG-04 MOMENTUM ORCHESTRATOR · thinking…</div>
+                    <div className="chat-msg-text" style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                      {[0,1,2].map(i => (
+                        <span key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pink)', display: 'inline-block', animation: `dot-pulse 1.2s ease-in-out ${i * 0.2}s infinite` }}/>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="chat-input-row">
                 <input
                   className="chat-input"
                   value={adkChatInput}
                   onChange={e => setAdkChatInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key !== 'Enter' || !adkChatInput.trim()) return
+                  disabled={adkChatLoading}
+                  onKeyDown={async e => {
+                    if (e.key !== 'Enter' || !adkChatInput.trim() || adkChatLoading) return
                     const userMsg = adkChatInput.trim()
                     const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
                     setAdkChat(c => [...c, { role: 'user', text: userMsg, ts }])
                     setAdkChatInput('')
-                    setTimeout(() => {
-                      const reply = getAdkResponse(userMsg)
-                      setAdkChat(c => [...c, { role: 'agent', text: reply, ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }])
-                      chatScrollRef.current?.scrollTo({ top: 999999, behavior: 'smooth' })
-                    }, 650)
+                    setAdkChatLoading(true)
                     setTimeout(() => chatScrollRef.current?.scrollTo({ top: 999999, behavior: 'smooth' }), 50)
+                    try {
+                      const res = await fetch('/api/portfolio-chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: userMsg, sessionId: adkChatSessionId }),
+                      })
+                      const data = await res.json() as { reply?: string; error?: string }
+                      const replyText = data.reply ?? data.error ?? 'No response from agent.'
+                      setAdkChat(c => [...c, { role: 'agent', text: replyText, ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }])
+                    } catch {
+                      setAdkChat(c => [...c, { role: 'agent', text: 'Could not reach ADK server — run `adk start` in the Terminal tab.', ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }])
+                    } finally {
+                      setAdkChatLoading(false)
+                      setTimeout(() => chatScrollRef.current?.scrollTo({ top: 999999, behavior: 'smooth' }), 50)
+                    }
                   }}
                   placeholder="Ask AG-04 about portfolio risk, patterns, accounts…"
                   spellCheck={false}
                 />
-                <button className="dev-btn" onClick={() => {
-                  if (!adkChatInput.trim()) return
+                <button className="dev-btn" disabled={adkChatLoading} onClick={async () => {
+                  if (!adkChatInput.trim() || adkChatLoading) return
                   const userMsg = adkChatInput.trim()
                   const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
                   setAdkChat(c => [...c, { role: 'user', text: userMsg, ts }])
                   setAdkChatInput('')
-                  setTimeout(() => {
-                    setAdkChat(c => [...c, { role: 'agent', text: getAdkResponse(userMsg), ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }])
-                    chatScrollRef.current?.scrollTo({ top: 999999, behavior: 'smooth' })
-                  }, 650)
-                }}>Send</button>
+                  setAdkChatLoading(true)
+                  setTimeout(() => chatScrollRef.current?.scrollTo({ top: 999999, behavior: 'smooth' }), 50)
+                  try {
+                    const res = await fetch('/api/portfolio-chat', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ message: userMsg, sessionId: adkChatSessionId }),
+                    })
+                    const data = await res.json() as { reply?: string; error?: string }
+                    const replyText = data.reply ?? data.error ?? 'No response from agent.'
+                    setAdkChat(c => [...c, { role: 'agent', text: replyText, ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }])
+                  } catch {
+                    setAdkChat(c => [...c, { role: 'agent', text: 'Could not reach ADK server — run `adk start` in the Terminal tab.', ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }])
+                  } finally {
+                    setAdkChatLoading(false)
+                    setTimeout(() => chatScrollRef.current?.scrollTo({ top: 999999, behavior: 'smooth' }), 50)
+                  }
+                }}>{adkChatLoading ? '…' : 'Send'}</button>
               </div>
             </>
           )}
@@ -3351,11 +4487,13 @@ export default function Dashboard() {
                 </div>
                 <button className={adkRunning ? 'dev-btn-ghost' : 'dev-btn'} onClick={() => {
                   if (!adkRunning) {
+                    adkStartTimeRef.current = Date.now()
                     setAdkRunning(true)
-                    setTermHistory(h => [...h, { type:'in', text:'$ adk start' }, { type:'info', text:'Starting Gemini ADK server…' }, { type:'out', text:'  ✓ Server up on http://localhost:8000' }, { type:'out', text:'  ✓ 12 agents ready · Gemini · MongoDB · Supabase connected' }])
+                    setTermHistory(h => [...h, { type:'in', text:'$ adk start' }, { type:'info', text:'Starting Gemini ADK server…' }, { type:'out', text:`  ✓ Server up on http://localhost:8000` }, { type:'out', text:`  ✓ ${agentsData.length} agents registered · gemini-2.5-flash · Vertex AI` }, { type:'out', text:`  ✓ ${agentsData.filter(a=>a.status==='Alerting').length} alerting · ${agentsData.filter(a=>a.status==='Analyzing').length} analyzing` }])
                   } else {
+                    adkStartTimeRef.current = null
                     setAdkRunning(false)
-                    setTermHistory(h => [...h, { type:'in', text:'$ adk stop' }, { type:'out', text:'  ✓ Server stopped' }])
+                    setTermHistory(h => [...h, { type:'in', text:'$ adk stop' }, { type:'out', text:'  ✓ Server stopped · all agent processes terminated' }])
                   }
                 }}>{adkRunning ? 'Stop Server' : 'Start Server'}</button>
               </div>
