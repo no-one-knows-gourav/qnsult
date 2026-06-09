@@ -267,4 +267,4 @@ qnsult (backend branch)          # ADK backend
 
 ## License
 
-[MIT](LICENSE) · Built by [Gourav Sahoo](https://github.com/no-one-knows-gourav) for the Google Cloud Rapid Agent Hackathon 2026.
+[MIT](LICENSE) · 
