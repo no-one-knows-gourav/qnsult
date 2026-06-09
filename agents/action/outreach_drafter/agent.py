@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update, mongo_upsert
 from agents.shared.gmail_toolset import create_gmail_draft
 
 load_dotenv()
@@ -8,7 +8,7 @@ load_dotenv()
 outreach_drafter_agent = Agent(
     name="outreach_drafter_agent",
     model="gemini-2.5-flash",
-    tools=[create_gmail_draft, mongo_find, mongo_insert, mongo_update],
+    tools=[create_gmail_draft, mongo_find, mongo_insert, mongo_update, mongo_upsert],
     instruction="""
 IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
 

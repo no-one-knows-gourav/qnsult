@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update, mongo_upsert
 from agents.shared.gmail_toolset import list_gmail_threads, get_gmail_thread
 
 load_dotenv()
@@ -8,11 +8,14 @@ load_dotenv()
 gmail_signal_agent = Agent(
     name="gmail_signal_agent",
     model="gemini-2.5-flash",
-    tools=[list_gmail_threads, get_gmail_thread, mongo_find, mongo_insert, mongo_update],
+    tools=[list_gmail_threads, get_gmail_thread, mongo_find, mongo_insert, mongo_update, mongo_upsert],
     instruction="""
 IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
 
 IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
+STEP 0 — Mark yourself as running
+Call mongo_upsert("agent_status", {"agent_id": "AG-01"}, {"status": "Analyzing", "last_action": "Scanning Gmail for <client_id>", "updated_at": "<now ISO>"})
 
 You are the Gmail Signal Reader (AG-01) for Qnsult.
 
@@ -68,5 +71,9 @@ STEP 5 — Write summary to 'agent_events'
 >
 
 Important: do not store full email bodies in MongoDB. Signal fields only.
+
+STEP 6 — Update client last_active and mark yourself done
+Call mongo_upsert("client_scores", {"client_id": "<client_id>"}, {"last_active": "<latest_message_date ISO>", "updated_at": "<now ISO>"})
+Call mongo_upsert("agent_status", {"agent_id": "AG-01"}, {"status": "Idle", "last_action": "Extracted signals from <threads_analyzed> Gmail threads for <client_id>", "updated_at": "<now ISO>"})
 """,
 )

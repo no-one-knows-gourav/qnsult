@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update, mongo_upsert
 from agents.shared.calendar_toolset import list_calendar_events, get_calendar_event
 
 load_dotenv()
@@ -8,11 +8,14 @@ load_dotenv()
 calendar_tracker_agent = Agent(
     name="calendar_tracker_agent",
     model="gemini-2.5-flash",
-    tools=[list_calendar_events, get_calendar_event, mongo_find, mongo_insert, mongo_update],
+    tools=[list_calendar_events, get_calendar_event, mongo_find, mongo_insert, mongo_update, mongo_upsert],
     instruction="""
 IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
 
 IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
+STEP 0 — Mark yourself as running
+Call mongo_upsert("agent_status", {"agent_id": "AG-02"}, {"status": "Analyzing", "last_action": "Scanning calendar for <client_id>", "updated_at": "<now ISO>"})
 
 You are the Calendar Tracker (AG-02) for Qnsult.
 
@@ -67,6 +70,10 @@ STEP 5 — Write to 'agent_events'
   exec_gap_warning: <true if days_since_last_exec_meeting > 21>,
   timestamp: <now ISO>
 >
+
+STEP 6 — Write exec cadence data to client_scores and mark yourself done
+Call mongo_upsert("client_scores", {"client_id": "<client_id>"}, {"exec_dark_days": <days_since_last_exec_meeting>, "updated_at": "<now ISO>"})
+Call mongo_upsert("agent_status", {"agent_id": "AG-02"}, {"status": "Idle", "last_action": "Mapped meeting cadence for <client_id> — <total_meetings_60d> meetings, exec gap <days_since_last_exec_meeting>d", "updated_at": "<now ISO>"})
 
 If days_since_last_exec_meeting > 21, also write a priority flag to 'dashboard_queue':
 {

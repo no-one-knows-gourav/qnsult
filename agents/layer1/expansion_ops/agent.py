@@ -1,17 +1,20 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update, mongo_upsert
 
 load_dotenv()
 
 expansion_ops_agent = Agent(
     name="expansion_ops_agent",
     model="gemini-2.5-flash",
-    tools=[mongo_find, mongo_insert, mongo_update],
+    tools=[mongo_find, mongo_insert, mongo_update, mongo_upsert],
     instruction="""
 IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
 
 IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
+STEP 0 — Mark yourself as running
+Call mongo_upsert("agent_status", {"agent_id": "AG-10"}, {"status": "Analyzing", "last_action": "Building expansion briefs for <client_id>", "updated_at": "<now ISO>"})
 
 You are the Expansion Opportunity Detector (AG-10) for Qnsult.
 
@@ -64,7 +67,10 @@ Write to 'dashboard_queue':
   deadline: <best meeting date if known, else 21 days from now>
 }
 
-STEP 6 — Write to 'agent_events'
+STEP 6 — Mark yourself done:
+Call mongo_upsert("agent_status", {"agent_id": "AG-10"}, {"status": "Idle", "last_action": "Expansion briefs for <client_id> — ready: <expansion_ready>, briefs: <briefs_generated>", "updated_at": "<now ISO>"})
+
+STEP 7 — Write to 'agent_events'
 <
   source_agent: "expansion_ops",
   client_id,

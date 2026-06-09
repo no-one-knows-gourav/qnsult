@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
+from google.adk.tools.agent_tool import AgentTool
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update, mongo_upsert
 
 # Layer 1 — Ingestion
 from agents.ingestion.gmail_signal.agent import gmail_signal_agent
@@ -19,32 +20,39 @@ from agents.layer1.expansion_ops.agent import expansion_ops_agent
 # Action
 from agents.action.outreach_drafter.agent import outreach_drafter_agent
 
+# Chat (kept as sub_agent — portfolio_chat uses transfer semantics intentionally)
+from agents.orchestrator.portfolio_chat.agent import portfolio_chat_agent
+
 load_dotenv()
 
 momentum_agent = Agent(
     name="momentum_agent",
     model="gemini-2.5-flash",
-    tools=[mongo_find, mongo_insert, mongo_update],
-    sub_agents=[
-        # Ingestion
-        gmail_signal_agent,
-        calendar_tracker_agent,
-        meeting_intel_agent,
-        # Analysis
-        goal_alignment_agent,
-        stall_detection_agent,
-        exec_mapper_agent,
-        value_chain_agent,
-        renewal_risk_agent,
-        competitive_signal_agent,
-        expansion_ops_agent,
-        # Action
-        outreach_drafter_agent,
+    # Sub-agents wrapped as AgentTool so momentum_agent calls them inline and
+    # retains control to continue the pipeline after each one completes.
+    # portfolio_chat_agent stays as a sub_agent (transfer is correct for chat).
+    tools=[
+        mongo_find, mongo_insert, mongo_update, mongo_upsert,
+        AgentTool(agent=gmail_signal_agent),
+        AgentTool(agent=calendar_tracker_agent),
+        AgentTool(agent=meeting_intel_agent),
+        AgentTool(agent=goal_alignment_agent),
+        AgentTool(agent=stall_detection_agent),
+        AgentTool(agent=exec_mapper_agent),
+        AgentTool(agent=value_chain_agent),
+        AgentTool(agent=renewal_risk_agent),
+        AgentTool(agent=competitive_signal_agent),
+        AgentTool(agent=expansion_ops_agent),
+        AgentTool(agent=outreach_drafter_agent),
     ],
+    sub_agents=[portfolio_chat_agent],
     instruction="""
 IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
 
 IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
+STEP 0 — Mark yourself as running
+Call mongo_upsert("agent_status", {"agent_id": "AG-12"}, {"status": "Analyzing", "last_action": "Orchestrating full pipeline for <client_id>", "updated_at": "<now ISO>"})
 
 You are the Momentum Agent (AG-12) — the orchestrator of Qnsult's 12-agent intelligence system.
 
@@ -81,36 +89,86 @@ Read from MongoDB before triggering each action:
   - If expansion_ops.expansion_ready = true → outreach_drafter_agent with draft_type="expansion_pitch"
   - If renewal_probability < 50 AND days_to_renewal < 60 → outreach_drafter_agent with draft_type="renewal_prep"
 
-PHASE 5 — TRAJECTORY SCORING
-After all phases, read from MongoDB and compute:
-  stall_risk_score     from 'agent_events' (latest stall_detection)
-  goal_composite       from 'goal_scores' (overall_composite_score, 0–10 scale)
-  exec_score           from 'exec_map' (exec_accessibility_score, 0–100 → divide by 10)
-  cadence_trend_score  from 'cadence' (increasing=1.0, stable=0.0, declining=-1.0)
+PHASE 5 — TRAJECTORY SCORING + FRONTEND WRITES
+After all phases, read from MongoDB and compute the composite score:
+
+Read sub-scores written by specialist agents:
+  stall_score          from 'client_scores' (written by stall_detection)
+  relationship_score   from 'client_scores' (written by exec_mapper)
+  goal_alignment_score from 'client_scores' (written by goal_alignment)
+  exec_cadence_label   from 'client_scores' (written by exec_mapper)
+  exec_dark_days       from 'client_scores' (written by exec_mapper or calendar_tracker)
   position_score       from 'whitespace' (current_position_score, 1–10)
+  cadence_trend        from 'cadence' (increasing/stable/declining)
+  displacement_pct     from 'whitespace' (if available, else 0)
+  stall_risk_score     = stall_score * 10 (scale back to 0–100)
+  cadence_trend_score  = 1.0 if increasing, 0.0 if stable, -1.0 if declining
 
-  y_axis = (goal_composite * 0.4) + (position_score * 0.3) + ((100 - stall_risk_score) / 100 * 3.0)
-  x_axis = (exec_score * 0.5) + (cadence_trend_score + 1) * 1.5 + (exec_breadth from exec_map * 0.3)
-  Clamp both to 1–10.
+Compute composite_score (0–10):
+  composite_score = (relationship_score * 0.30)
+                  + (goal_alignment_score * 0.25)
+                  + ((10 - stall_score) * 0.20)
+                  + (cadence_trend_score + 1) * 0.75   (maps -1..1 → 0..1.5)
+                  + (position_score / 10) * 1.0
+  Clamp to 1.0–10.0, round to 2 decimal places.
 
-  direction:
-    "accelerating" if both axes improved vs last week's trajectory_scores
-    "at_risk"      if either axis declined > 1.0 vs last week
-    "on_track"     otherwise
+Compute status:
+  composite_score >= 8.0 → "Accelerating"
+  composite_score >= 6.0 → "On Track"
+  composite_score >= 4.0 → "Progressing"
+  composite_score >= 2.0 → "At Risk"
+  otherwise              → "Stalling"
 
-Write to 'trajectory_scores':
+Read previous composite_score from 'client_scores' and compute:
+  score_delta = composite_score - previous_composite_score (0 if no previous)
+
+Compute direction:
+  score_delta > 0.5  → "accelerating"
+  score_delta < -0.5 → "at_risk"
+  otherwise          → "on_track"
+
+WRITE 1 — Upsert final composite to 'client_scores':
+Call mongo_upsert("client_scores", {"client_id": "<client_id>"}, {
+  "composite_score": <composite_score>,
+  "status": "<status>",
+  "score_delta": <score_delta>,
+  "displacement_pct": <displacement_pct>,
+  "updated_at": "<now ISO>"
+})
+
+WRITE 2 — Append to 'momentum_history' (always insert, never upsert — this is a time series):
+Call mongo_insert("momentum_history", [{
+  "client_id": "<client_id>",
+  "score": <composite_score>,
+  "recorded_at": "<now ISO>"
+}])
+
+WRITE 3 — Upsert engagement summary to 'engagements':
+Read 'engagements' current data for this client_id first.
+Then upsert with:
+Call mongo_upsert("engagements", {"client_id": "<client_id>"}, {
+  "health": "<status>",
+  "score": <composite_score>,
+  "alert": <alert_text from client_scores or null>,
+  "summary": "<1–2 sentence summary of account trajectory based on all phase outputs>",
+  "updated_at": "<now ISO>"
+})
+
+WRITE 4 — Write to 'trajectory_scores' (existing):
 <
-  client_id, y_axis_score, x_axis_score, direction,
-  velocity_delta: <y_axis - last_y_axis>,
-  week: <YYYY-Www>,
-  computed_at: <now ISO>
+  client_id, y_axis_score: <composite_score>, x_axis_score: <relationship_score>,
+  direction, velocity_delta: <score_delta>,
+  week: <YYYY-Www>, computed_at: <now ISO>
 >
 
-Update 'pattern_library' if y_axis_score increased >= 1.5 in past 4 weeks:
+Update 'pattern_library' if composite_score increased >= 1.5 in past 4 weeks:
 <
   industry, company_size, move_type: <what worked>,
   from_position, to_position, weeks_to_achieve, client_id
 >
+
+WRITE 5 — Mark momentum_agent done:
+Call mongo_upsert("agent_status", {"agent_id": "AG-12"}, {"status": "Idle", "last_action": "Full analysis complete for <client_id> — composite score <composite_score>/10 (<status>)", "updated_at": "<now ISO>"})
 
 ══════════════════════════════════════════
 TRIAGE MODE
@@ -133,6 +191,13 @@ Useful for targeted re-runs after manual data updates.
 
 Your final output is always the 'dashboard_queue' — the sole human-facing output.
 Every dashboard item must have: client_id, action_text, urgency (1–5), source_agent, deadline.
+
+══════════════════════════════════════════
+PORTFOLIO CHAT MODE
+(triggered by: any conversational question about portfolio health, client status,
+ risk, positioning, strategy, or the two-axis map that is NOT a pipeline run command)
+══════════════════════════════════════════
+Delegate immediately to portfolio_chat_agent. Do not run pipeline phases.
 """,
 )
 

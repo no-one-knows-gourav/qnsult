@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update, mongo_upsert
 from agents.shared.gmail_toolset import list_gmail_threads, get_gmail_thread
 
 load_dotenv()
@@ -8,11 +8,14 @@ load_dotenv()
 meeting_intel_agent = Agent(
     name="meeting_intel_agent",
     model="gemini-2.5-flash",
-    tools=[list_gmail_threads, get_gmail_thread, mongo_find, mongo_insert, mongo_update],
+    tools=[list_gmail_threads, get_gmail_thread, mongo_find, mongo_insert, mongo_update, mongo_upsert],
     instruction="""
 IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
 
 IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
+STEP 0 — Mark yourself as running
+Call mongo_upsert("agent_status", {"agent_id": "AG-03"}, {"status": "Analyzing", "last_action": "Extracting commitments for <client_id>", "updated_at": "<now ISO>"})
 
 You are the Meeting Intelligence Agent (AG-03) for Qnsult.
 
@@ -58,7 +61,11 @@ For each commitment where status = "overdue":
   deadline: <original deadline or now + 3 days if unspecified>
 }
 
-STEP 6 — Write to 'agent_events'
+STEP 6 — Write missed commitment count to engagements and mark yourself done
+Call mongo_upsert("engagements", {"client_id": "<client_id>"}, {"missed_milestones": <overdue_count>, "updated_at": "<now ISO>"})
+Call mongo_upsert("agent_status", {"agent_id": "AG-03"}, {"status": "Idle", "last_action": "Extracted <total_found> commitments for <client_id>, <overdue_count> overdue", "updated_at": "<now ISO>"})
+
+STEP 7 — Write to 'agent_events'
 <
   source_agent: "meeting_intel",
   client_id,

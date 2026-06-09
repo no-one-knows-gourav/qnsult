@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update, mongo_upsert
 from agents.shared.gmail_toolset import list_gmail_threads, get_gmail_thread
 
 load_dotenv()
@@ -8,11 +8,14 @@ load_dotenv()
 competitive_signal_agent = Agent(
     name="competitive_signal_agent",
     model="gemini-2.5-flash",
-    tools=[list_gmail_threads, get_gmail_thread, mongo_find, mongo_insert, mongo_update],
+    tools=[list_gmail_threads, get_gmail_thread, mongo_find, mongo_insert, mongo_update, mongo_upsert],
     instruction="""
 IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
 
 IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
+STEP 0 — Mark yourself as running
+Call mongo_upsert("agent_status", {"agent_id": "AG-09"}, {"status": "Analyzing", "last_action": "Scanning for competitive signals for <client_id>", "updated_at": "<now ISO>"})
 
 You are the Competitive Signal Detector (AG-09) for Qnsult.
 
@@ -61,6 +64,22 @@ STEP 6 — Write to MongoDB 'competitive_signals' (upsert by client_id)
   assessed_at: <now ISO>
 }
 
+STEP 6B — Also write to 'competitive_threats' (insert new row — do not upsert, each scan is a new record):
+Call mongo_insert("competitive_threats", [{
+  "client_id": "<client_id>",
+  "competitor": "<competitor name if detected from email content, else 'Unknown'>",
+  "threat_type": "<rfp_bid|talent_poach|shadow_proposal|budget_window — infer from signals>",
+  "severity": "<Critical|High|Medium|Low — map from threat_level: high→Critical, medium→High, low→Medium, none→Low>",
+  "signal_source": "<which signals triggered this: explicit_rfp/evaluation_language/sentiment_decline/etc>",
+  "flagged_text": "<verbatim excerpt from email thread that triggered the flag, or null>",
+  "defense_play": "<suggested play name: Exec Alignment Lock for rfp_bid, Stakeholder Anchor for talent, Value Chain Shift for shadow, Pre-emptive Scope Lock for budget>",
+  "status": "Monitoring",
+  "days_detected": 0,
+  "detected_at": "<now ISO>",
+  "updated_at": "<now ISO>"
+}])
+Skip this step if threat_level is "none".
+
 STEP 7 — Dashboard escalation for medium/high threats
 Write to 'dashboard_queue':
 {
@@ -71,7 +90,10 @@ Write to 'dashboard_queue':
   deadline: <5 days from now ISO>
 }
 
-STEP 8 — Write to 'agent_events'
+STEP 8 — Mark yourself done:
+Call mongo_upsert("agent_status", {"agent_id": "AG-09"}, {"status": "Idle", "last_action": "Competitive scan complete for <client_id> — threat_level: <threat_level>", "updated_at": "<now ISO>"})
+
+STEP 9 — Write to 'agent_events'
 <
   source_agent: "competitive_signal",
   client_id,

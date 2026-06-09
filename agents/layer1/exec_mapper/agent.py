@@ -1,17 +1,20 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update, mongo_upsert
 
 load_dotenv()
 
 exec_mapper_agent = Agent(
     name="exec_mapper_agent",
     model="gemini-2.5-flash",
-    tools=[mongo_find, mongo_insert, mongo_update],
+    tools=[mongo_find, mongo_insert, mongo_update, mongo_upsert],
     instruction="""
 IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
 
 IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
+STEP 0 — Mark yourself as running
+Call mongo_upsert("agent_status", {"agent_id": "AG-05"}, {"status": "Analyzing", "last_action": "Mapping exec relationships for <client_id>", "updated_at": "<now ISO>"})
 
 You are the Executive Relationship Mapper (AG-05) for Qnsult.
 
@@ -59,7 +62,19 @@ If exec_gap_flag is true, write to 'dashboard_queue':
   deadline: <10 days from now ISO>
 }
 
-STEP 5 — Write to 'agent_events'
+STEP 5 — Write relationship sub-scores to 'client_scores' (upsert by client_id):
+Call mongo_upsert("client_scores", {"client_id": "<client_id>"}, {
+  "relationship_score": <exec_accessibility_score / 10.0>,
+  "relationship_delta": 0,
+  "exec_dark_days": <days_since_last_exec_meeting>,
+  "exec_cadence_label": "<Active|Slowing|Dark Xd>",
+  "updated_at": "<now ISO>"
+})
+
+STEP 6 — Mark yourself done:
+Call mongo_upsert("agent_status", {"agent_id": "AG-05"}, {"status": "Idle", "last_action": "Exec score <exec_accessibility_score>/100 for <client_id>, gap_flag=<exec_gap_flag>", "updated_at": "<now ISO>"})
+
+STEP 7 — Write to 'agent_events'
 <
   source_agent: "exec_mapper",
   client_id,

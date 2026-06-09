@@ -47,7 +47,10 @@ def list_calendar_events(
     if query:
         kwargs['q'] = query
 
-    result = _calendar().events().list(**kwargs).execute()
+    try:
+        result = _calendar().events().list(**kwargs).execute()
+    except Exception as e:
+        return {'events': [], 'total': 0, 'note': f'Calendar unavailable: {e}'}
     events = []
     for e in result.get('items', []):
         attendees = [a.get('email', '') for a in e.get('attendees', [])]
@@ -74,7 +77,10 @@ def get_calendar_event(event_id: str) -> dict:
     Returns:
         dict with full event detail including all attendees with response status
     """
-    e = _calendar().events().get(calendarId='primary', eventId=event_id).execute()
+    try:
+        e = _calendar().events().get(calendarId='primary', eventId=event_id).execute()
+    except Exception as err:
+        return {'event_id': event_id, 'error': str(err), 'note': 'Calendar unavailable'}
     attendees = [
         {
             'email': a.get('email', ''),

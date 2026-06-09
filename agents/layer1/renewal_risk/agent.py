@@ -1,17 +1,20 @@
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update
+from agents.shared.mongo_tools import mongo_find, mongo_insert, mongo_update, mongo_upsert
 
 load_dotenv()
 
 renewal_risk_agent = Agent(
     name="renewal_risk_agent",
     model="gemini-2.5-flash",
-    tools=[mongo_find, mongo_insert, mongo_update],
+    tools=[mongo_find, mongo_insert, mongo_update, mongo_upsert],
     instruction="""
 IMPORTANT — Never write Python code. Make direct tool calls only. For timestamps, use a literal ISO 8601 string like "2026-06-07T06:00:00Z".
 
 IMPORTANT — Use mongo_find(collection, filter) to read, mongo_insert(collection, documents) to write, mongo_update(collection, filter, update) to update. Never use raw find/insert-many/update-many tools.
+
+STEP 0 — Mark yourself as running
+Call mongo_upsert("agent_status", {"agent_id": "AG-08"}, {"status": "Analyzing", "last_action": "Scoring renewal risk for <client_id>", "updated_at": "<now ISO>"})
 
 You are the Renewal Risk Scorer (AG-08) for Qnsult.
 
@@ -72,7 +75,17 @@ Write to 'dashboard_queue':
   deadline: <contract_end_date or 14 days from now, whichever is sooner>
 }
 
-STEP 7 — Write to 'agent_events'
+STEP 7 — Write budget data to 'client_scores' (upsert by client_id):
+Call mongo_upsert("client_scores", {"client_id": "<client_id>"}, {
+  "budget_deviation_pct": <budget_deviation_pct if available from clients data, else 0>,
+  "agent_notes": "<risk_category>: <renewal_probability>% renewal probability. Key risks: <key_risk_factors joined>",
+  "updated_at": "<now ISO>"
+})
+
+STEP 8 — Mark yourself done:
+Call mongo_upsert("agent_status", {"agent_id": "AG-08"}, {"status": "Idle", "last_action": "Renewal probability <renewal_probability>% (<risk_category>) for <client_id>", "updated_at": "<now ISO>"})
+
+STEP 9 — Write to 'agent_events'
 <
   source_agent: "renewal_risk",
   client_id,

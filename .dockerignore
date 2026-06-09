@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+*.pyo
+.env
+token.json
+credentials.json
+mcp/
+seed_db.py
+setup_oauth.py
+.git
+*.md

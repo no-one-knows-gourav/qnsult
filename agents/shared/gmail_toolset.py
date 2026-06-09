@@ -30,9 +30,12 @@ def list_gmail_threads(query: str, max_results: int = 20) -> dict:
     Returns:
         dict with 'threads' (list of {threadId, snippet}) and 'resultSizeEstimate'
     """
-    result = _gmail().users().threads().list(
-        userId='me', q=query, maxResults=max_results
-    ).execute()
+    try:
+        result = _gmail().users().threads().list(
+            userId='me', q=query, maxResults=max_results
+        ).execute()
+    except Exception as e:
+        return {'threads': [], 'resultSizeEstimate': 0, 'note': f'Gmail unavailable: {e}'}
     return {
         'threads': result.get('threads', []),
         'resultSizeEstimate': result.get('resultSizeEstimate', 0),
