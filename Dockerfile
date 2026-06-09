@@ -12,14 +12,10 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# NEXT_PUBLIC_* vars must be available at build time (inlined by Next.js)
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+# Supabase anon key is a public client-side credential — safe to bake into image
+ENV NEXT_PUBLIC_SUPABASE_URL=https://sxxrwykfohktsnyscryr.supabase.co
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4eHJ3eWtmb2hrdHNueXNjcnlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NTI2NTIsImV4cCI6MjA5NjQyODY1Mn0.sR7nfcoShqj_Nb2_oGIgFctSnQ4QPevm9MhOkibc_wk
 ENV NEXT_TELEMETRY_DISABLED=1
-
 RUN npm run build
 
 # Production runner
